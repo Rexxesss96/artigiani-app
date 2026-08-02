@@ -10,6 +10,7 @@
     "db:seed": "tsx server/db/seed.ts"
   },
   "dependencies": {
+    "better-auth": "^1.6.25",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.12",
     "postgres": "^3.4.9",
