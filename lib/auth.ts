@@ -22,7 +22,7 @@ export const auth = betterAuth({
         type: "string",
         required: true,
         defaultValue: "customer",
-        input: true, // allow it to be set at sign-up
+        input: false, // the role is never decided by the client, only by the server
       },
       firstName: {
         type: "string",
