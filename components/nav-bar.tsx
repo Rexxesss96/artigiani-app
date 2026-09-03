@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function NavBar() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: session, isPending } = useSession();
 
   async function handleLogout() {
     await authClient.signOut();
+    queryClient.clear();
     router.push("/");
     router.refresh();
   }
