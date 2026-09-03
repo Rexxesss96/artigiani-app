@@ -23,6 +23,9 @@ export function NavBar() {
       <nav className="flex items-center gap-4 text-sm">
         {isPending ? null : session ? (
           <>
+            <Link href="/company" className="underline">
+              My company
+            </Link>
             <span className="text-gray-600">Hi, {session.user.firstName}</span>
             <button onClick={handleLogout} className="underline cursor-pointer">
               Log out
