@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function NavBar() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: session, isPending } = useSession();
 
   async function handleLogout() {
     await authClient.signOut();
+    queryClient.clear();
     router.push("/");
     router.refresh();
   }
@@ -23,6 +26,9 @@ export function NavBar() {
       <nav className="flex items-center gap-4 text-sm">
         {isPending ? null : session ? (
           <>
+            <Link href="/company" className="underline">
+              My company
+            </Link>
             <span className="text-gray-600">Hi, {session.user.firstName}</span>
             <button onClick={handleLogout} className="underline cursor-pointer">
               Log out
