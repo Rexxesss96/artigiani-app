@@ -50,7 +50,7 @@ export default function CompanyDashboardPage() {
     });
   }
 
-  if (sessionPending || companyPending) {
+  if (sessionPending) {
     return <p className="p-8">Loading...</p>;
   }
 
@@ -60,6 +60,10 @@ export default function CompanyDashboardPage() {
         <p>You need to be logged in to register a company.</p>
       </main>
     );
+  }
+
+  if (companyPending) {
+    return <p className="p-8">Loading...</p>;
   }
 
   if (myCompany) {

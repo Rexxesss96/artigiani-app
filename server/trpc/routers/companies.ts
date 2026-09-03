@@ -25,29 +25,35 @@ export const companiesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { categoryIds, ...companyData } = input;
 
-      const [company] = await db
-        .insert(companies)
-        .values({
-          ...companyData,
-          userId: ctx.session.user.id,
-        })
-        .returning();
+      // All three writes below happen in a single transaction: if any
+      // of them fails, everything before it in this block is rolled
+      // back too — we never end up with a half-created company.
+      const company = await db.transaction(async (tx) => {
+        const [newCompany] = await tx
+          .insert(companies)
+          .values({
+            ...companyData,
+            userId: ctx.session.user.id,
+          })
+          .returning();
 
-      await db.insert(companiesCategories).values(
-        categoryIds.map((categoryId) => ({
-          companyId: company.id,
-          categoryId,
-        })),
-      );
+        await tx.insert(companiesCategories).values(
+          categoryIds.map((categoryId) => ({
+            companyId: newCompany.id,
+            categoryId,
+          })),
+        );
 
-      // Promotes the user to "company" — ONLY here, server-side, as
-      // a consequence of actually creating a company.
-      // The client never chooses the role.
+        // Promotes the user to "company" — ONLY here, server-side, as
+        // a consequence of actually creating a company.
+        // The client never chooses the role.
+        await tx
+          .update(user)
+          .set({ role: "company" })
+          .where(eq(user.id, ctx.session.user.id));
 
-      await db
-        .update(user)
-        .set({ role: "company" })
-        .where(eq(user.id, ctx.session.user.id));
+        return newCompany;
+      });
 
       return company;
     }),
