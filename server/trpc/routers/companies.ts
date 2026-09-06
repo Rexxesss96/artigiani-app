@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../trpc";
+import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { db } from "@/server/db";
 import { companies, companiesCategories, user } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
@@ -70,4 +70,17 @@ export const companiesRouter = router({
       },
     });
   }),
+
+  getById: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      return db.query.companies.findFirst({
+        where: eq(companies.id, input.id),
+        with: {
+          categories: {
+            with: { category: true },
+          },
+        },
+      });
+    }),
 });
