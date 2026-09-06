@@ -76,6 +76,16 @@ export const companiesRouter = router({
     .query(async ({ input }) => {
       return db.query.companies.findFirst({
         where: eq(companies.id, input.id),
+        columns: {
+          id: true,
+          businessName: true,
+          address: true,
+          city: true,
+          province: true,
+          postalCode: true,
+          phone: true,
+          description: true,
+        },
         with: {
           categories: {
             with: { category: true },

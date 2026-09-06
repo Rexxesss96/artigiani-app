@@ -1,5 +1,6 @@
 import { createContext } from "@/server/trpc/context";
 import { appRouter } from "@/server/trpc/routers/_app";
+import { notFound } from "next/navigation";
 
 export default async function CompanyProfilePage({
   params,
@@ -8,12 +9,15 @@ export default async function CompanyProfilePage({
 }) {
   const { id } = await params;
   const companyId = Number(id);
+  if (!Number.isInteger(companyId) || companyId <= 0) {
+    notFound();
+  }
 
   const caller = appRouter.createCaller(await createContext());
   const company = await caller.companies.getById({ id: companyId });
 
   if (!company) {
-    return <p>Impresa non trovata.</p>;
+    notFound();
   }
 
   return (
