@@ -71,6 +71,8 @@ export const companiesRouter = router({
     });
   }),
 
+  // Returns a company by id with its linked categories (public query).
+
   getById: publicProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
