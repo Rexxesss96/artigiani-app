@@ -19,17 +19,15 @@ Next.js + Drizzle ORM + driver Postgres. Schema DB iniziale: `user`/`session`/`a
 ### ✅ Milestone 2 — Autenticazione
 Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/register, navbar consapevole della sessione. Query cache pulita al logout.
 
-### 🔶 Milestone 3 — Impresa: registrazione, categorie, profilo pubblico
+### ✅ Milestone 3 — Impresa: registrazione, categorie, profilo pubblico
 - ✅ tRPC setup (router `_app`, `companies`, `categories`)
 - ✅ Registrazione impresa (`companies.create`, form in `app/(dashboard)/company/page.tsx`) — transazione atomica: crea impresa + collega categorie + promuove utente a ruolo `company`
 - ✅ Selezione categorie/mestieri in fase di registrazione (`companies_categories`)
-- ⬜ **Prossimo passo:** pagina profilo pubblico impresa
-  - `companies.getById` — query pubblica in `server/trpc/routers/companies.ts` (pattern simile a `getMine`, ma `findFirst` per `id` invece che `userId`)
-  - `app/(public)/companies/[id]/page.tsx` — route dinamica, **Server Component** (niente `"use client"`: mostra solo dati, nessuna interattività) — concetto Server vs Client Component da capire bene qui, primo caso in cui esce dal pattern "tutto client" usato finora
+- ✅ Pagina profilo pubblico impresa (`companies.getById` + `app/(public)/companies/[id]/page.tsx`, Server Component — primo pezzo scritto senza `"use client"`)
 
-### ⬜ Milestone 4 — Ricerca pubblica imprese
-- `companies.search` — query pubblica con filtri opzionali (`categoryId`, `city`)
-- `app/(public)/page.tsx` — da pagina statica ("Search coming in the next milestone") a form di ricerca + lista risultati, con link ai profili impresa della Milestone 3
+### 🔶 Milestone 4 — Ricerca pubblica imprese
+- ⬜ **Prossimo passo:** `companies.search` — query pubblica con filtri opzionali (`categoryId`, `city`)
+- ⬜ `app/(public)/page.tsx` — da pagina statica ("Search coming in the next milestone") a form di ricerca + lista risultati, con link ai profili impresa della Milestone 3
 
 ### ⬜ Milestone 5 — Richieste di preventivo
 - Cliente autenticato invia richiesta a un'impresa (`quote_requests`, stato `pending`)
