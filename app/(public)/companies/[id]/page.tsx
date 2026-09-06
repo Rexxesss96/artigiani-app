@@ -2,6 +2,8 @@ import { createContext } from "@/server/trpc/context";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { notFound } from "next/navigation";
 
+// Public Server Component that renders a company's profile page.
+
 export default async function CompanyProfilePage({
   params,
 }: {
