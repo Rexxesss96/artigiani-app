@@ -3,6 +3,7 @@ import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { db } from "@/server/db";
 import { companies, companiesCategories, user } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const companiesRouter = router({
   // Creates a company for the logged-in user and promotes them to "company".
@@ -29,6 +30,17 @@ export const companiesRouter = router({
       // of them fails, everything before it in this block is rolled
       // back too — we never end up with a half-created company.
       const company = await db.transaction(async (tx) => {
+        const existing = await tx.query.companies.findFirst({
+          where: eq(companies.userId, ctx.session.user.id),
+          columns: { id: true },
+        });
+
+        if (existing) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "You already have a registered company.",
+          });
+        }
         const [newCompany] = await tx
           .insert(companies)
           .values({
