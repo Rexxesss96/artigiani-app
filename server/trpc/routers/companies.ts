@@ -41,6 +41,7 @@ export const companiesRouter = router({
             message: "You already have a registered company.",
           });
         }
+
         const [newCompany] = await tx
           .insert(companies)
           .values({
