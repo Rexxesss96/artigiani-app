@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { companies, companiesCategories, user } from "@/server/db/schema";
 import { and, asc, eq, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { geocodeAddress } from "@/server/geocode";
 
 // Fields a company can fill in, shared by `create` and `update`.
 // (The VAT number is only set once, at creation: it identifies the company.)
@@ -32,6 +33,10 @@ export const companiesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { categoryIds, ...companyData } = input;
 
+      // Coordinates for the map, computed from the address. Done BEFORE
+      // the transaction: a slow network call shouldn't keep it open.
+      const coordinates = await geocodeAddress(companyData);
+
       // All three writes below happen in a single transaction: if any
       // of them fails, everything before it in this block is rolled
       // back too — we never end up with a half-created company.
@@ -52,6 +57,7 @@ export const companiesRouter = router({
           .insert(companies)
           .values({
             ...companyData,
+            ...coordinates,
             userId: ctx.session.user.id,
           })
           .returning();
@@ -84,6 +90,34 @@ export const companiesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { categoryIds, ...companyData } = input;
 
+      const current = await db.query.companies.findFirst({
+        where: eq(companies.userId, ctx.session.user.id),
+        columns: {
+          address: true,
+          postalCode: true,
+          city: true,
+          province: true,
+        },
+      });
+      if (!current) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: ctx.dict.errors.companyNotFound,
+        });
+      }
+
+      // Recompute the coordinates only if the address changed. If the
+      // lookup fails we clear them rather than keep a wrong position.
+      const addressChanged = (
+        ["address", "postalCode", "city", "province"] as const
+      ).some((field) => current[field] !== companyData[field]);
+      const coordinates = addressChanged
+        ? ((await geocodeAddress(companyData)) ?? {
+            latitude: null,
+            longitude: null,
+          })
+        : {};
+
       return db.transaction(async (tx) => {
         const [updated] = await tx
           .update(companies)
@@ -93,6 +127,7 @@ export const companiesRouter = router({
             sdiCode: companyData.sdiCode || null,
             phone: companyData.phone || null,
             description: companyData.description || null,
+            ...coordinates,
           })
           .where(eq(companies.userId, ctx.session.user.id))
           .returning();
@@ -214,6 +249,8 @@ export const companiesRouter = router({
           postalCode: true,
           phone: true,
           description: true,
+          latitude: true,
+          longitude: true,
         },
         with: {
           categories: {

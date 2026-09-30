@@ -39,6 +39,8 @@ export const it: Dictionary = {
   profile: {
     about: "Chi siamo",
     contacts: "Contatti",
+    map: "Mappa di {name}",
+    openMap: "Apri la mappa grande",
     address: "Indirizzo",
     phone: "Telefono: {phone}",
     requestQuote: "Richiedi un preventivo",

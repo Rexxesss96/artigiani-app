@@ -38,10 +38,17 @@ Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/reg
 - ✅ Può recensire solo chi ha una richiesta di preventivo **accettata** da quell'impresa, una sola volta
 - ✅ Voto medio, lista recensioni e form nel profilo impresa
 
-### 🔶 Milestone 7 — Rifinitura / deploy (da valutare insieme)
+### ✅ Milestone 7 — Rifinitura (deploy rimandato)
 - ✅ Titoli delle pagine e bottoni leggibili con il tema scuro
 - ✅ Interfaccia in italiano e inglese con selettore IT/EN nella navbar (`lib/i18n/`): lingua salvata nel cookie `lang`, altrimenti quella del browser, altrimenti italiano. Tradotti anche errori del server, mestieri e date
-- ⬜ **Prossimo passo:** da definire insieme
-- Mappa con `latitude`/`longitude` (già in schema, non ancora usati)
-- Deploy su Vercel (rimandato: per ora l'app resta in locale)
-- Altro da decidere quando ci arriviamo
+- ✅ Dati demo e account di prova: `npm run db:seed:demo` (vedi README)
+- ✅ Nuova interfaccia grafica: token di colore e classi riutilizzabili (`.card`, `.btn`, `.input`...) in `globals.css`, tema chiaro/scuro, layout mobile
+- ✅ Modifica del profilo impresa dalla dashboard (`companies.update`, form riutilizzabile `CompanyForm`)
+- ✅ Mappa OpenStreetMap nel profilo impresa; coordinate calcolate dall'indirizzo con Nominatim alla registrazione e quando cambia l'indirizzo
+- ⬜ Deploy su Vercel + database Postgres online (rimandato: per ora l'app resta in locale)
+
+### Idee per il futuro
+- Mappa con tutte le imprese nella pagina di ricerca (servirebbe una libreria come Leaflet)
+- Foto/logo dell'impresa
+- Notifiche email quando arriva o cambia una richiesta di preventivo
+- Vincolo unico nel database "una recensione per cliente per impresa" (oggi è controllato solo nel codice)
