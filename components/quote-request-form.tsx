@@ -58,7 +58,7 @@ export function QuoteRequestForm({ companyId }: { companyId: number }) {
       <button
         type="submit"
         disabled={createRequest.isPending}
-        className="cursor-pointer rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+        className="cursor-pointer rounded bg-foreground px-4 py-2 text-background disabled:opacity-50"
       >
         {createRequest.isPending ? "Sending..." : "Send request"}
       </button>

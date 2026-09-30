@@ -72,7 +72,7 @@ export default async function HomePage({
 
         <button
           type="submit"
-          className="cursor-pointer rounded bg-black px-4 py-2 text-white"
+          className="cursor-pointer rounded bg-foreground px-4 py-2 text-background"
         >
           Search
         </button>
