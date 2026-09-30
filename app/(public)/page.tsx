@@ -17,7 +17,10 @@ export default async function HomePage({
 
   // A search param can be missing, a string, or an array (?city=a&city=b):
   // we only accept a single string and ignore everything else.
-  const city = typeof params.city === "string" ? params.city.trim() : "";
+  // Capped at 60 chars, like the search input schema: a longer value
+  // would make the query throw and the page fail.
+  const city =
+    typeof params.city === "string" ? params.city.trim().slice(0, 60) : "";
   const categoryParam =
     typeof params.category === "string" ? Number(params.category) : NaN;
   const categoryId =

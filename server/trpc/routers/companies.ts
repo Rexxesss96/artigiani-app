@@ -99,8 +99,15 @@ export const companiesRouter = router({
       // Each filter becomes one SQL condition; `and()` skips the
       // undefined ones, so a missing filter simply doesn't apply.
       const conditions = [
-        // ilike = case-insensitive LIKE: "rom" matches "Roma" and "ROMA"
-        input.city ? ilike(companies.city, `%${input.city}%`) : undefined,
+        // ilike = case-insensitive LIKE: "rom" matches "Roma" and "ROMA".
+        // "%" and "_" are wildcards in LIKE, so we escape them (and "\")
+        // to search for them as plain characters.
+        input.city
+          ? ilike(
+              companies.city,
+              `%${input.city.replace(/[\\%_]/g, "\\$&")}%`,
+            )
+          : undefined,
 
         // The category lives in the join table, so we keep only the
         // companies whose id appears there next to the chosen category.
