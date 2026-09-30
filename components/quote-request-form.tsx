@@ -30,9 +30,9 @@ export function QuoteRequestForm({ companyId }: { companyId: number }) {
 
   if (createRequest.isSuccess) {
     return (
-      <p className="text-sm text-green-700">
+      <p className="success-text">
         {dict.quoteForm.sent}{" "}
-        <Link href="/requests" className="underline">
+        <Link href="/requests" className="link">
           {dict.quoteForm.myRequestsLink}
         </Link>
         .
@@ -49,18 +49,18 @@ export function QuoteRequestForm({ companyId }: { companyId: number }) {
         required
         minLength={10}
         maxLength={2000}
-        rows={4}
-        className="w-full rounded border border-gray-300 px-3 py-2"
+        rows={5}
+        className="input"
       />
 
       {createRequest.error && (
-        <p className="text-sm text-red-600">{createRequest.error.message}</p>
+        <p className="error-text">{createRequest.error.message}</p>
       )}
 
       <button
         type="submit"
         disabled={createRequest.isPending}
-        className="cursor-pointer rounded bg-foreground px-4 py-2 text-background disabled:opacity-50"
+        className="btn btn-primary w-full"
       >
         {createRequest.isPending ? dict.quoteForm.sending : dict.quoteForm.send}
       </button>

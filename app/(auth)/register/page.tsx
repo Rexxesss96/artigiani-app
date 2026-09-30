@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/components/i18n-provider";
 import { authErrorMessage } from "@/lib/i18n/auth-errors";
@@ -42,64 +43,85 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-lg border border-gray-200 p-6"
-      >
-        <h1 className="text-2xl font-semibold">{dict.auth.registerTitle}</h1>
-
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder={dict.auth.firstName}
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            required
-            className="w-1/2 rounded border border-gray-300 px-3 py-2"
-          />
-          <input
-            type="text"
-            placeholder={dict.auth.lastName}
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-            className="w-1/2 rounded border border-gray-300 px-3 py-2"
-          />
+    <main className="container-page flex justify-center py-12">
+      <form onSubmit={handleSubmit} className="card w-full max-w-md space-y-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {dict.auth.registerTitle}
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            {dict.auth.registerSubtitle}
+          </p>
         </div>
 
-        <input
-          type="email"
-          placeholder={dict.auth.email}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full rounded border border-gray-300 px-3 py-2"
-        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="label">{dict.auth.firstName}</span>
+            <input
+              type="text"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              className="input"
+            />
+          </label>
+          <label className="block">
+            <span className="label">{dict.auth.lastName}</span>
+            <input
+              type="text"
+              autoComplete="family-name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              className="input"
+            />
+          </label>
+        </div>
 
-        <input
-          type="password"
-          placeholder={dict.auth.password}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={8}
-          className="w-full rounded border border-gray-300 px-3 py-2"
-        />
+        <label className="block">
+          <span className="label">{dict.auth.email}</span>
+          <input
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="input"
+          />
+        </label>
+
+        <label className="block">
+          <span className="label">{dict.auth.password}</span>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            className="input"
+          />
+        </label>
 
         {errorCode && (
-          <p className="text-sm text-red-600">
-            {authErrorMessage(errorCode, dict)}
-          </p>
+          <p className="error-text">{authErrorMessage(errorCode, dict)}</p>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-foreground py-2 text-background disabled:opacity-50 cursor-pointer"
+          className="btn btn-primary w-full"
         >
           {loading ? dict.auth.creatingAccount : dict.auth.signup}
         </button>
+
+        <p className="text-center text-sm text-muted">
+          {dict.auth.haveAccount}{" "}
+          <Link href="/login" className="link">
+            {dict.auth.login}
+          </Link>
+        </p>
       </form>
     </main>
   );

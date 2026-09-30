@@ -19,9 +19,12 @@ export const it: Dictionary = {
   },
   common: {
     loading: "Caricamento...",
+    footer: "Artigiani Directory · Trova l'artigiano giusto vicino a te",
   },
   home: {
     title: "Trova imprese e artigiani della tua zona",
+    subtitle:
+      "Idraulici, elettricisti, falegnami e molti altri: cerca per città e mestiere, chiedi un preventivo e leggi recensioni vere.",
     city: "Città",
     cityPlaceholder: "es. Roma",
     trade: "Mestiere",
@@ -29,10 +32,14 @@ export const it: Dictionary = {
     search: "Cerca",
     clearFilters: "Rimuovi filtri",
     noResults: "Nessuna impresa trovata.",
+    noResultsHint: "Prova un'altra città o rimuovi i filtri.",
     resultsOne: "1 impresa trovata.",
     resultsOther: "{count} imprese trovate.",
   },
   profile: {
+    about: "Chi siamo",
+    contacts: "Contatti",
+    address: "Indirizzo",
     phone: "Telefono: {phone}",
     requestQuote: "Richiedi un preventivo",
     loginLink: "Accedi",
@@ -55,6 +62,7 @@ export const it: Dictionary = {
   },
   requestsPage: {
     title: "Le mie richieste",
+    subtitle: "Le richieste di preventivo che hai inviato e il loro stato.",
     loginRequired: "Devi accedere per vedere le tue richieste.",
     empty: "Non hai ancora inviato nessuna richiesta.",
     findCompany: "Cerca un'impresa",
@@ -65,6 +73,9 @@ export const it: Dictionary = {
     rejected: "rifiutata",
   },
   dashboard: {
+    subtitle: "Gestisci il tuo profilo pubblico e le richieste che ricevi.",
+    registerSubtitle:
+      "Inserisci i dati della tua impresa: dopo la registrazione i clienti ti troveranno nella ricerca.",
     loginRequired: "Devi accedere per registrare un'impresa.",
     viewProfile: "Vedi il profilo pubblico",
     quoteRequests: "Richieste di preventivo",
@@ -86,6 +97,11 @@ export const it: Dictionary = {
     loadingCategories: "Caricamento mestieri...",
     creating: "Registrazione...",
     register: "Registra impresa",
+    editProfile: "Modifica profilo",
+    save: "Salva modifiche",
+    saving: "Salvataggio...",
+    saved: "Profilo aggiornato.",
+    cancel: "Annulla",
   },
   reviewForm: {
     rating: "Voto",
@@ -98,6 +114,11 @@ export const it: Dictionary = {
     outOfFive: "{rating} su 5",
   },
   auth: {
+    loginSubtitle: "Bentornato! Accedi per seguire le tue richieste.",
+    registerSubtitle:
+      'Registrati per chiedere preventivi e lasciare recensioni. Sei un\'impresa? Registrati e poi iscrivi la tua impresa da "La mia impresa".',
+    noAccount: "Non hai un account?",
+    haveAccount: "Hai già un account?",
     loginTitle: "Accedi",
     email: "Email",
     password: "Password",

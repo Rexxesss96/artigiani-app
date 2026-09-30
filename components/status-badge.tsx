@@ -8,9 +8,9 @@ import { useI18n } from "@/components/i18n-provider";
 // give it a color too.
 
 const STATUS_STYLES: Record<"pending" | "accepted" | "rejected", string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  accepted: "bg-green-100 text-green-800",
-  rejected: "bg-red-100 text-red-800",
+  pending: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  accepted: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
+  rejected: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
 };
 
 export function StatusBadge({
@@ -21,7 +21,7 @@ export function StatusBadge({
   const { dict } = useI18n();
   return (
     <span
-      className={`rounded px-2 py-1 text-xs font-medium ${STATUS_STYLES[status]}`}
+      className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[status]}`}
     >
       {dict.status[status]}
     </span>

@@ -47,7 +47,10 @@ export default async function RootLayout({
         <I18nProvider locale={locale} dict={dict}>
           <TrpcProvider>
             <NavBar />
-            {children}
+            <div className="flex-1">{children}</div>
+            <footer className="border-t border-border py-6 text-center text-sm text-muted">
+              {dict.common.footer}
+            </footer>
           </TrpcProvider>
         </I18nProvider>
       </body>

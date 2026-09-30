@@ -17,9 +17,12 @@ export const en = {
   },
   common: {
     loading: "Loading...",
+    footer: "Artigiani Directory · Find the right tradesperson near you",
   },
   home: {
     title: "Find local companies and tradespeople",
+    subtitle:
+      "Plumbers, electricians, carpenters and more: search by city and trade, request a quote and read real reviews.",
     city: "City",
     cityPlaceholder: "e.g. Roma",
     trade: "Trade",
@@ -27,10 +30,14 @@ export const en = {
     search: "Search",
     clearFilters: "Clear filters",
     noResults: "No companies found.",
+    noResultsHint: "Try another city or remove the filters.",
     resultsOne: "1 company found.",
     resultsOther: "{count} companies found.",
   },
   profile: {
+    about: "About",
+    contacts: "Contacts",
+    address: "Address",
     phone: "Phone: {phone}",
     requestQuote: "Request a quote",
     loginLink: "Log in",
@@ -53,6 +60,7 @@ export const en = {
   },
   requestsPage: {
     title: "My requests",
+    subtitle: "The quote requests you sent and their status.",
     loginRequired: "You need to be logged in to see your requests.",
     empty: "You haven't sent any requests yet.",
     findCompany: "Find a company",
@@ -63,6 +71,9 @@ export const en = {
     rejected: "rejected",
   },
   dashboard: {
+    subtitle: "Manage your public profile and the requests you receive.",
+    registerSubtitle:
+      "Fill in your company details: once registered, customers will find you in the search.",
     loginRequired: "You need to be logged in to register a company.",
     viewProfile: "View public profile",
     quoteRequests: "Quote requests",
@@ -84,6 +95,11 @@ export const en = {
     loadingCategories: "Loading categories...",
     creating: "Creating...",
     register: "Register company",
+    editProfile: "Edit profile",
+    save: "Save changes",
+    saving: "Saving...",
+    saved: "Profile updated.",
+    cancel: "Cancel",
   },
   reviewForm: {
     rating: "Rating",
@@ -96,6 +112,11 @@ export const en = {
     outOfFive: "{rating} out of 5",
   },
   auth: {
+    loginSubtitle: "Welcome back! Log in to follow your requests.",
+    registerSubtitle:
+      'Sign up to request quotes and leave reviews. Are you a company? Sign up, then register your company from "My company".',
+    noAccount: "Don't have an account?",
+    haveAccount: "Already have an account?",
     loginTitle: "Log in",
     email: "Email",
     password: "Password",

@@ -20,51 +20,51 @@ export function ReceivedRequests() {
   });
 
   if (isPending) {
-    return <p>{dict.dashboard.loadingRequests}</p>;
+    return <p className="text-muted">{dict.dashboard.loadingRequests}</p>;
   }
 
   if (!requests || requests.length === 0) {
-    return <p className="text-gray-600">{dict.dashboard.noRequests}</p>;
+    return <p className="card text-muted">{dict.dashboard.noRequests}</p>;
   }
 
   return (
     <>
       {updateStatus.error && (
-        <p className="mb-3 text-sm text-red-600">
-          {updateStatus.error.message}
-        </p>
+        <p className="error-text mb-3">{updateStatus.error.message}</p>
       )}
 
       <ul className="flex flex-col gap-4">
         {requests.map((request) => (
-          <li key={request.id} className="rounded border border-gray-200 p-4">
-            <div className="flex items-center justify-between gap-4">
-              <p className="font-semibold">
-                {request.user.firstName} {request.user.lastName}
-              </p>
+          <li key={request.id} className="card">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-semibold">
+                  {request.user.firstName} {request.user.lastName}
+                </p>
+                <p className="text-xs text-muted">
+                  {new Date(request.createdAt).toLocaleDateString(
+                    dateLocales[locale],
+                  )}{" "}
+                  ·{" "}
+                  <a href={`mailto:${request.user.email}`} className="link">
+                    {request.user.email}
+                  </a>
+                </p>
+              </div>
               <StatusBadge status={request.status} />
             </div>
-            <p className="mt-1 text-xs text-gray-500">
-              {new Date(request.createdAt).toLocaleDateString(
-                dateLocales[locale],
-              )}{" "}
-              ·{" "}
-              <a href={`mailto:${request.user.email}`} className="underline">
-                {request.user.email}
-              </a>
-            </p>
-            <p className="mt-2 whitespace-pre-line text-sm">
+            <p className="mt-3 whitespace-pre-line text-sm">
               {request.message}
             </p>
 
             {request.status === "pending" && (
-              <div className="mt-3 flex gap-2">
+              <div className="mt-4 flex gap-2">
                 <button
                   onClick={() =>
                     updateStatus.mutate({ id: request.id, status: "accepted" })
                   }
                   disabled={updateStatus.isPending}
-                  className="cursor-pointer rounded bg-green-700 px-3 py-1 text-sm text-white disabled:opacity-50"
+                  className="btn bg-green-700 text-white hover:bg-green-800"
                 >
                   {dict.dashboard.accept}
                 </button>
@@ -73,7 +73,7 @@ export function ReceivedRequests() {
                     updateStatus.mutate({ id: request.id, status: "rejected" })
                   }
                   disabled={updateStatus.isPending}
-                  className="cursor-pointer rounded border border-red-700 px-3 py-1 text-sm text-red-700 disabled:opacity-50"
+                  className="btn btn-secondary text-red-700 dark:text-red-400"
                 >
                   {dict.dashboard.reject}
                 </button>
