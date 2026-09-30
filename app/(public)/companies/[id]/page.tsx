@@ -72,7 +72,12 @@ export default async function CompanyProfilePage({
       <h1 className="text-2xl font-semibold">{company.businessName}</h1>
       {average !== null && (
         <p className="text-sm">
-          <Stars rating={average} label={format(dict.reviewForm.outOfFive, { rating: average.toFixed(1) })} />{" "}
+          <Stars
+            rating={average}
+            label={format(dict.reviewForm.outOfFive, {
+              rating: average.toFixed(1),
+            })}
+          />{" "}
           {average.toFixed(1)} (
           {reviews.length === 1
             ? dict.profile.reviewCountOne

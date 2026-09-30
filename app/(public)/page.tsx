@@ -41,9 +41,7 @@ export default async function HomePage({
 
   return (
     <main className="mx-auto w-full max-w-3xl p-8">
-      <h1 className="text-3xl font-bold">
-        {dict.home.title}
-      </h1>
+      <h1 className="text-3xl font-bold">{dict.home.title}</h1>
 
       {/* action="" = stay on this page, only the search params change */}
       <Form action="" className="mt-6 flex flex-wrap items-end gap-3">
@@ -72,10 +70,10 @@ export default async function HomePage({
                 categoryName(dict, a).localeCompare(categoryName(dict, b)),
               )
               .map((category) => (
-              <option key={category.id} value={category.id}>
-                {categoryName(dict, category)}
-              </option>
-            ))}
+                <option key={category.id} value={category.id}>
+                  {categoryName(dict, category)}
+                </option>
+              ))}
           </select>
         </label>
 
