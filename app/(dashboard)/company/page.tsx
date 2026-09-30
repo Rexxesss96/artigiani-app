@@ -6,10 +6,13 @@ import { useSession } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 import Link from "next/link";
 import { ReceivedRequests } from "@/components/received-requests";
+import { useI18n } from "@/components/i18n-provider";
+import { categoryName } from "@/lib/i18n/dictionaries";
 
 export default function CompanyDashboardPage() {
   const router = useRouter();
   const { data: session, isPending: sessionPending } = useSession();
+  const { dict } = useI18n();
 
   const { data: categories, isPending: categoriesPending } =
     trpc.categories.list.useQuery();
@@ -53,19 +56,19 @@ export default function CompanyDashboardPage() {
   }
 
   if (sessionPending) {
-    return <p className="p-8">Loading...</p>;
+    return <p className="p-8">{dict.common.loading}</p>;
   }
 
   if (!session) {
     return (
       <main className="p-8">
-        <p>You need to be logged in to register a company.</p>
+        <p>{dict.dashboard.loginRequired}</p>
       </main>
     );
   }
 
   if (companyPending) {
-    return <p className="p-8">Loading...</p>;
+    return <p className="p-8">{dict.common.loading}</p>;
   }
 
   if (myCompany) {
@@ -76,10 +79,12 @@ export default function CompanyDashboardPage() {
           href={`/companies/${myCompany.id}`}
           className="text-sm text-gray-600 underline"
         >
-          View public profile
+          {dict.dashboard.viewProfile}
         </Link>
 
-        <h2 className="mt-8 mb-4 text-lg font-semibold">Quote requests</h2>
+        <h2 className="mt-8 mb-4 text-lg font-semibold">
+          {dict.dashboard.quoteRequests}
+        </h2>
         <ReceivedRequests />
       </main>
     );
@@ -91,17 +96,19 @@ export default function CompanyDashboardPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-lg space-y-4 rounded-lg border border-gray-200 p-6"
       >
-        <h1 className="text-2xl font-semibold">Register your company</h1>
+        <h1 className="text-2xl font-semibold">
+          {dict.dashboard.registerTitle}
+        </h1>
 
         <input
           name="businessName"
-          placeholder="Business name"
+          placeholder={dict.dashboard.businessName}
           required
           className="w-full rounded border border-gray-300 px-3 py-2"
         />
         <input
           name="vatNumber"
-          placeholder="VAT number (11 digits)"
+          placeholder={dict.dashboard.vatNumber}
           required
           minLength={11}
           maxLength={11}
@@ -109,13 +116,13 @@ export default function CompanyDashboardPage() {
         />
         <input
           name="sdiCode"
-          placeholder="SDI code (optional)"
+          placeholder={dict.dashboard.sdiCode}
           maxLength={7}
           className="w-full rounded border border-gray-300 px-3 py-2"
         />
         <input
           name="address"
-          placeholder="Address"
+          placeholder={dict.dashboard.address}
           required
           className="w-full rounded border border-gray-300 px-3 py-2"
         />
@@ -123,20 +130,20 @@ export default function CompanyDashboardPage() {
         <div className="flex gap-3">
           <input
             name="city"
-            placeholder="City"
+            placeholder={dict.dashboard.city}
             required
             className="w-1/2 rounded border border-gray-300 px-3 py-2"
           />
           <input
             name="province"
-            placeholder="Province (e.g. VA)"
+            placeholder={dict.dashboard.province}
             required
             maxLength={2}
             className="w-1/4 rounded border border-gray-300 px-3 py-2"
           />
           <input
             name="postalCode"
-            placeholder="ZIP"
+            placeholder={dict.dashboard.postalCode}
             required
             maxLength={5}
             className="w-1/4 rounded border border-gray-300 px-3 py-2"
@@ -145,19 +152,19 @@ export default function CompanyDashboardPage() {
 
         <input
           name="phone"
-          placeholder="Phone (optional)"
+          placeholder={dict.dashboard.phone}
           className="w-full rounded border border-gray-300 px-3 py-2"
         />
         <textarea
           name="description"
-          placeholder="Short description (optional)"
+          placeholder={dict.dashboard.description}
           className="w-full rounded border border-gray-300 px-3 py-2"
         />
 
         <div>
-          <p className="mb-2 text-sm font-medium">Trades</p>
+          <p className="mb-2 text-sm font-medium">{dict.dashboard.trades}</p>
           <div className="grid grid-cols-2 gap-2">
-            {categoriesPending && <p>Loading categories...</p>}
+            {categoriesPending && <p>{dict.dashboard.loadingCategories}</p>}
             {categories?.map((category) => (
               <label
                 key={category.id}
@@ -168,7 +175,7 @@ export default function CompanyDashboardPage() {
                   checked={selectedCategories.includes(category.id)}
                   onChange={() => toggleCategory(category.id)}
                 />
-                {category.name}
+                {categoryName(dict, category)}
               </label>
             ))}
           </div>
@@ -183,7 +190,9 @@ export default function CompanyDashboardPage() {
           disabled={createCompany.isPending || selectedCategories.length === 0}
           className="w-full rounded bg-foreground py-2 text-background disabled:opacity-50 cursor-pointer"
         >
-          {createCompany.isPending ? "Creating..." : "Register company"}
+          {createCompany.isPending
+            ? dict.dashboard.creating
+            : dict.dashboard.register}
         </button>
       </form>
     </main>

@@ -2,11 +2,14 @@
 
 import { trpc } from "@/lib/trpc";
 import { StatusBadge } from "@/components/status-badge";
+import { useI18n } from "@/components/i18n-provider";
+import { dateLocales } from "@/lib/i18n/config";
 
 // Company dashboard section: quote requests received by my company,
 // with Accept / Reject buttons on the pending ones.
 
 export function ReceivedRequests() {
+  const { dict, locale } = useI18n();
   const utils = trpc.useUtils();
   const { data: requests, isPending } =
     trpc.quoteRequests.listReceived.useQuery();
@@ -17,11 +20,11 @@ export function ReceivedRequests() {
   });
 
   if (isPending) {
-    return <p>Loading requests...</p>;
+    return <p>{dict.dashboard.loadingRequests}</p>;
   }
 
   if (!requests || requests.length === 0) {
-    return <p className="text-gray-600">No quote requests yet.</p>;
+    return <p className="text-gray-600">{dict.dashboard.noRequests}</p>;
   }
 
   return (
@@ -42,7 +45,7 @@ export function ReceivedRequests() {
               <StatusBadge status={request.status} />
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              {new Date(request.createdAt).toLocaleDateString()} ·{" "}
+              {new Date(request.createdAt).toLocaleDateString(dateLocales[locale])} ·{" "}
               <a href={`mailto:${request.user.email}`} className="underline">
                 {request.user.email}
               </a>
@@ -60,7 +63,7 @@ export function ReceivedRequests() {
                   disabled={updateStatus.isPending}
                   className="cursor-pointer rounded bg-green-700 px-3 py-1 text-sm text-white disabled:opacity-50"
                 >
-                  Accept
+                  {dict.dashboard.accept}
                 </button>
                 <button
                   onClick={() =>
@@ -69,7 +72,7 @@ export function ReceivedRequests() {
                   disabled={updateStatus.isPending}
                   className="cursor-pointer rounded border border-red-700 px-3 py-1 text-sm text-red-700 disabled:opacity-50"
                 >
-                  Reject
+                  {dict.dashboard.reject}
                 </button>
               </div>
             )}

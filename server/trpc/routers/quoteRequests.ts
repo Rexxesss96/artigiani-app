@@ -25,14 +25,14 @@ export const quoteRequestsRouter = router({
       if (!company) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Company not found.",
+          message: ctx.dict.errors.companyNotFound,
         });
       }
 
       if (company.userId === ctx.session.user.id) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "You can't request a quote from your own company.",
+          message: ctx.dict.errors.ownCompanyQuote,
         });
       }
 
@@ -50,8 +50,7 @@ export const quoteRequestsRouter = router({
       if (pendingRequest) {
         throw new TRPCError({
           code: "CONFLICT",
-          message:
-            "You already have a pending request with this company. Wait for its answer.",
+          message: ctx.dict.errors.pendingRequestExists,
         });
       }
 
@@ -144,7 +143,7 @@ export const quoteRequestsRouter = router({
       if (!updated) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Request not found or already answered.",
+          message: ctx.dict.errors.requestNotFound,
         });
       }
 
