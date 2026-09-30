@@ -45,7 +45,10 @@ export function ReceivedRequests() {
               <StatusBadge status={request.status} />
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              {new Date(request.createdAt).toLocaleDateString(dateLocales[locale])} ·{" "}
+              {new Date(request.createdAt).toLocaleDateString(
+                dateLocales[locale],
+              )}{" "}
+              ·{" "}
               <a href={`mailto:${request.user.email}`} className="underline">
                 {request.user.email}
               </a>

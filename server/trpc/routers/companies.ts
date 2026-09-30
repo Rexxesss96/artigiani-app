@@ -103,10 +103,7 @@ export const companiesRouter = router({
         // "%" and "_" are wildcards in LIKE, so we escape them (and "\")
         // to search for them as plain characters.
         input.city
-          ? ilike(
-              companies.city,
-              `%${input.city.replace(/[\\%_]/g, "\\$&")}%`,
-            )
+          ? ilike(companies.city, `%${input.city.replace(/[\\%_]/g, "\\$&")}%`)
           : undefined,
 
         // The category lives in the join table, so we keep only the

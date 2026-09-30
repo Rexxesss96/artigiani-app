@@ -59,8 +59,10 @@ export default function MyRequestsPage() {
               <StatusBadge status={request.status} />
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              {new Date(request.createdAt).toLocaleDateString(dateLocales[locale])} ·{" "}
-              {request.company.city}
+              {new Date(request.createdAt).toLocaleDateString(
+                dateLocales[locale],
+              )}{" "}
+              · {request.company.city}
             </p>
             <p className="mt-2 whitespace-pre-line text-sm">
               {request.message}

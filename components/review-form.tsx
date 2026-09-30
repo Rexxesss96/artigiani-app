@@ -35,7 +35,11 @@ export function ReviewForm({ companyId }: { companyId: number }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex gap-1" role="radiogroup" aria-label={dict.reviewForm.rating}>
+      <div
+        className="flex gap-1"
+        role="radiogroup"
+        aria-label={dict.reviewForm.rating}
+      >
         {[1, 2, 3, 4, 5].map((value) => (
           <button
             key={value}
