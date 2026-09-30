@@ -7,6 +7,9 @@ import Link from "next/link";
 import { QuoteRequestForm } from "@/components/quote-request-form";
 import { ReviewForm } from "@/components/review-form";
 import { Stars } from "@/components/stars";
+import { getDictionary } from "@/lib/i18n/server";
+import { categoryName, format } from "@/lib/i18n/dictionaries";
+import { dateLocales } from "@/lib/i18n/config";
 
 // cache() makes the two calls below (generateMetadata and the page)
 // share ONE database query per request instead of running it twice.
@@ -28,7 +31,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const companyId = parseId((await params).id);
   const company = companyId ? await getCompany(companyId) : null;
-  return { title: company?.businessName ?? "Company not found" };
+  const { dict } = await getDictionary();
+  return { title: company?.businessName ?? dict.metadata.companyNotFound };
 }
 
 // Public Server Component that renders a company's profile page.
@@ -44,6 +48,7 @@ export default async function CompanyProfilePage({
   }
 
   const ctx = await createContext();
+  const { dict, locale } = ctx;
   const caller = appRouter.createCaller(ctx);
   const company = await getCompany(companyId);
 
@@ -67,8 +72,12 @@ export default async function CompanyProfilePage({
       <h1 className="text-2xl font-semibold">{company.businessName}</h1>
       {average !== null && (
         <p className="text-sm">
-          <Stars rating={average} /> {average.toFixed(1)} ({reviews.length}{" "}
-          {reviews.length === 1 ? "review" : "reviews"})
+          <Stars rating={average} label={format(dict.reviewForm.outOfFive, { rating: average.toFixed(1) })} />{" "}
+          {average.toFixed(1)} (
+          {reviews.length === 1
+            ? dict.profile.reviewCountOne
+            : format(dict.profile.reviewCountOther, { count: reviews.length })}
+          )
         </p>
       )}
       <p className="text-gray-600">
@@ -81,34 +90,38 @@ export default async function CompanyProfilePage({
             key={c.categoryId}
             className="rounded bg-gray-100 px-2 py-1 text-sm text-gray-800"
           >
-            {c.category.name}
+            {categoryName(dict, c.category)}
           </span>
         ))}
       </div>
 
       {company.description && <p className="mt-4">{company.description}</p>}
       {company.phone && (
-        <p className="mt-2 text-sm text-gray-600">Phone: {company.phone}</p>
+        <p className="mt-2 text-sm text-gray-600">
+          {format(dict.profile.phone, { phone: company.phone })}
+        </p>
       )}
 
       <section className="mt-8 max-w-lg">
-        <h2 className="mb-3 text-lg font-semibold">Request a quote</h2>
+        <h2 className="mb-3 text-lg font-semibold">
+          {dict.profile.requestQuote}
+        </h2>
         {!ctx.session ? (
           <p className="text-sm">
             <Link href="/login" className="underline">
-              Log in
+              {dict.profile.loginLink}
             </Link>{" "}
-            to request a quote from this company.
+            {dict.profile.loginToRequest}
           </p>
         ) : isOwnCompany ? (
-          <p className="text-sm text-gray-600">This is your company.</p>
+          <p className="text-sm text-gray-600">{dict.profile.yourCompany}</p>
         ) : (
           <QuoteRequestForm companyId={company.id} />
         )}
       </section>
 
       <section className="mt-8 max-w-lg">
-        <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
+        <h2 className="mb-3 text-lg font-semibold">{dict.profile.reviews}</h2>
 
         {eligibility?.canReview && (
           <div className="mb-6">
@@ -116,11 +129,13 @@ export default async function CompanyProfilePage({
           </div>
         )}
         {eligibility && !eligibility.canReview && !isOwnCompany && (
-          <p className="mb-4 text-sm text-gray-600">{eligibility.reason}</p>
+          <p className="mb-4 text-sm text-gray-600">
+            {dict.profile[eligibility.reason]}
+          </p>
         )}
 
         {reviews.length === 0 ? (
-          <p className="text-sm text-gray-600">No reviews yet.</p>
+          <p className="text-sm text-gray-600">{dict.profile.noReviews}</p>
         ) : (
           <ul className="flex flex-col gap-4">
             {reviews.map((review) => (
@@ -129,10 +144,15 @@ export default async function CompanyProfilePage({
                 className="rounded border border-gray-200 p-4"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <Stars rating={review.rating} />
+                  <Stars
+                    rating={review.rating}
+                    label={format(dict.reviewForm.outOfFive, {
+                      rating: review.rating,
+                    })}
+                  />
                   <span className="text-xs text-gray-500">
                     {review.author} ·{" "}
-                    {review.createdAt.toLocaleDateString("en-GB")}
+                    {review.createdAt.toLocaleDateString(dateLocales[locale])}
                   </span>
                 </div>
                 {review.comment && (

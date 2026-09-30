@@ -1,3 +1,7 @@
+"use client";
+
+import { useI18n } from "@/components/i18n-provider";
+
 // Small colored label for a quote request's status.
 // A Record maps every possible status to its classes: if a new status
 // is ever added to the enum, TypeScript will complain here until we
@@ -14,11 +18,12 @@ export function StatusBadge({
 }: {
   status: keyof typeof STATUS_STYLES;
 }) {
+  const { dict } = useI18n();
   return (
     <span
       className={`rounded px-2 py-1 text-xs font-medium ${STATUS_STYLES[status]}`}
     >
-      {status}
+      {dict.status[status]}
     </span>
   );
 }

@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 import { StatusBadge } from "@/components/status-badge";
+import { useI18n } from "@/components/i18n-provider";
+import { dateLocales } from "@/lib/i18n/config";
 
 // "My requests": the quote requests the logged-in user has sent.
 
 export default function MyRequestsPage() {
   const { data: session, isPending: sessionPending } = useSession();
+  const { dict, locale } = useI18n();
 
   const { data: requests, isPending: requestsPending } =
     trpc.quoteRequests.listSent.useQuery(undefined, {
@@ -16,28 +19,28 @@ export default function MyRequestsPage() {
     });
 
   if (sessionPending) {
-    return <p className="p-8">Loading...</p>;
+    return <p className="p-8">{dict.common.loading}</p>;
   }
 
   if (!session) {
     return (
       <main className="p-8">
-        <p>You need to be logged in to see your requests.</p>
+        <p>{dict.requestsPage.loginRequired}</p>
       </main>
     );
   }
 
   return (
     <main className="mx-auto w-full max-w-3xl p-8">
-      <h1 className="text-2xl font-semibold">My requests</h1>
+      <h1 className="text-2xl font-semibold">{dict.requestsPage.title}</h1>
 
-      {requestsPending && <p className="mt-4">Loading...</p>}
+      {requestsPending && <p className="mt-4">{dict.common.loading}</p>}
 
       {requests?.length === 0 && (
         <p className="mt-4 text-gray-600">
-          You haven&apos;t sent any requests yet.{" "}
+          {dict.requestsPage.empty}{" "}
           <Link href="/" className="underline">
-            Find a company
+            {dict.requestsPage.findCompany}
           </Link>
           .
         </p>
@@ -56,7 +59,7 @@ export default function MyRequestsPage() {
               <StatusBadge status={request.status} />
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              {new Date(request.createdAt).toLocaleDateString()} ·{" "}
+              {new Date(request.createdAt).toLocaleDateString(dateLocales[locale])} ·{" "}
               {request.company.city}
             </p>
             <p className="mt-2 whitespace-pre-line text-sm">

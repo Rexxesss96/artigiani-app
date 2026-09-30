@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/components/nav-bar";
 import { TrpcProvider } from "@/components/trpc-provider";
+import { I18nProvider } from "@/components/i18n-provider";
+import { getDictionary } from "@/lib/i18n/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,32 +16,40 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  // "template" is applied to the title of every child page that sets
-  // one: e.g. the company profile becomes "Rossi Impianti · Artigiani Directory".
-  title: {
-    default: "Artigiani Directory",
-    template: "%s · Artigiani Directory",
-  },
-  description:
-    "Find local companies and tradespeople, request a quote and read reviews.",
-};
+// generateMetadata (instead of a fixed `metadata` object) because the
+// description depends on the visitor's language.
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    // "template" is applied to the title of every child page that sets
+    // one: e.g. the company profile becomes "Rossi Impianti · Artigiani Directory".
+    title: {
+      default: "Artigiani Directory",
+      template: "%s · Artigiani Directory",
+    },
+    description: dict.metadata.description,
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { locale, dict } = await getDictionary();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <TrpcProvider>
-          <NavBar />
-          {children}
-        </TrpcProvider>
+        <I18nProvider locale={locale} dict={dict}>
+          <TrpcProvider>
+            <NavBar />
+            {children}
+          </TrpcProvider>
+        </I18nProvider>
       </body>
     </html>
   );

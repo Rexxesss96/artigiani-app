@@ -9,6 +9,8 @@ import { TRPCError } from "@trpc/server";
 // ACCEPTED by that company (so they actually worked together), and
 // only once per company. Used both to show/hide the form and, again,
 // inside `create` — the server never trusts the UI.
+// `reason` is a dictionary key (profile.*), so each page shows it in
+// the visitor's language.
 async function getReviewEligibility(userId: string, companyId: number) {
   const acceptedRequest = await db.query.quoteRequests.findFirst({
     where: and(
@@ -20,10 +22,7 @@ async function getReviewEligibility(userId: string, companyId: number) {
   });
 
   if (!acceptedRequest) {
-    return {
-      canReview: false,
-      reason: "You can review a company after it accepts one of your quote requests.",
-    } as const;
+    return { canReview: false, reason: "reviewNeedsAccepted" } as const;
   }
 
   const existingReview = await db.query.reviews.findFirst({
@@ -32,10 +31,7 @@ async function getReviewEligibility(userId: string, companyId: number) {
   });
 
   if (existingReview) {
-    return {
-      canReview: false,
-      reason: "You have already reviewed this company.",
-    } as const;
+    return { canReview: false, reason: "alreadyReviewed" } as const;
   }
 
   return { canReview: true, reason: null } as const;
@@ -96,7 +92,7 @@ export const reviewsRouter = router({
       if (!eligibility.canReview) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: eligibility.reason,
+          message: ctx.dict.profile[eligibility.reason],
         });
       }
 

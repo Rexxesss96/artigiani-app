@@ -2,6 +2,8 @@ import Form from "next/form";
 import Link from "next/link";
 import { createContext } from "@/server/trpc/context";
 import { appRouter } from "@/server/trpc/routers/_app";
+import { getDictionary } from "@/lib/i18n/server";
+import { categoryName, format } from "@/lib/i18n/dictionaries";
 
 // Public home page: search form + results list.
 // Server Component — the filters live in the URL (/?city=Roma&category=2),
@@ -28,6 +30,7 @@ export default async function HomePage({
       ? categoryParam
       : undefined;
 
+  const { dict } = await getDictionary();
   const caller = appRouter.createCaller(await createContext());
   const [categories, companies] = await Promise.all([
     caller.categories.list(),
@@ -39,32 +42,38 @@ export default async function HomePage({
   return (
     <main className="mx-auto w-full max-w-3xl p-8">
       <h1 className="text-3xl font-bold">
-        Find local companies and tradespeople
+        {dict.home.title}
       </h1>
 
       {/* action="" = stay on this page, only the search params change */}
       <Form action="" className="mt-6 flex flex-wrap items-end gap-3">
         <label className="flex flex-col text-sm">
-          City
+          {dict.home.city}
           <input
             name="city"
             defaultValue={city}
-            placeholder="e.g. Roma"
+            placeholder={dict.home.cityPlaceholder}
             className="mt-1 rounded border border-gray-300 px-3 py-2"
           />
         </label>
 
         <label className="flex flex-col text-sm">
-          Trade
+          {dict.home.trade}
           <select
             name="category"
             defaultValue={categoryId ?? ""}
             className="mt-1 rounded border border-gray-300 px-3 py-2"
           >
-            <option value="">All trades</option>
-            {categories.map((category) => (
+            <option value="">{dict.home.allTrades}</option>
+            {categories
+              // Sorted by the translated name, so the list is alphabetical
+              // in the visitor's language.
+              .toSorted((a, b) =>
+                categoryName(dict, a).localeCompare(categoryName(dict, b)),
+              )
+              .map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {categoryName(dict, category)}
               </option>
             ))}
           </select>
@@ -74,20 +83,22 @@ export default async function HomePage({
           type="submit"
           className="cursor-pointer rounded bg-foreground px-4 py-2 text-background"
         >
-          Search
+          {dict.home.search}
         </button>
 
         {hasFilters && (
           <Link href="/" className="py-2 text-sm underline">
-            Clear filters
+            {dict.home.clearFilters}
           </Link>
         )}
       </Form>
 
       <p className="mt-6 text-sm text-gray-600">
         {companies.length === 0
-          ? "No companies found."
-          : `${companies.length} ${companies.length === 1 ? "company" : "companies"} found.`}
+          ? dict.home.noResults
+          : companies.length === 1
+            ? dict.home.resultsOne
+            : format(dict.home.resultsOther, { count: companies.length })}
       </p>
 
       <ul className="mt-4 flex flex-col gap-4">
@@ -112,7 +123,7 @@ export default async function HomePage({
                     key={c.categoryId}
                     className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-800"
                   >
-                    {c.category.name}
+                    {categoryName(dict, c.category)}
                   </span>
                 ))}
               </div>

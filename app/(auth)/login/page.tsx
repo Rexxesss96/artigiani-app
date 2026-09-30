@@ -3,17 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { useI18n } from "@/components/i18n-provider";
+import { authErrorMessage } from "@/lib/i18n/auth-errors";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { dict } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  // We keep the error CODE, not the text: the text is picked at render
+  // time, so it follows the language even if the user switches it later.
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    setErrorCode(null);
     setLoading(true);
 
     const { error } = await authClient.signIn.email({
@@ -24,7 +29,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (error) {
-      setError(error.message ?? "Invalid email or password.");
+      setErrorCode(error.code ?? "UNKNOWN");
       return;
     }
 
@@ -37,11 +42,11 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 rounded-lg border border-gray-200 p-6"
       >
-        <h1 className="text-2xl font-semibold">Log in</h1>
+        <h1 className="text-2xl font-semibold">{dict.auth.loginTitle}</h1>
 
         <input
           type="email"
-          placeholder="Email"
+          placeholder={dict.auth.email}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -50,21 +55,25 @@ export default function LoginPage() {
 
         <input
           type="password"
-          placeholder="Password"
+          placeholder={dict.auth.password}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           className="w-full rounded border border-gray-300 px-3 py-2"
         />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {errorCode && (
+          <p className="text-sm text-red-600">
+            {authErrorMessage(errorCode, dict)}
+          </p>
+        )}
 
         <button
           type="submit"
           disabled={loading}
           className="w-full rounded bg-foreground py-2 text-background disabled:opacity-50 cursor-pointer"
         >
-          {loading ? "Logging in..." : "Log in"}
+          {loading ? dict.auth.loggingIn : dict.auth.login}
         </button>
       </form>
     </main>

@@ -39,7 +39,9 @@ Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/reg
 - ✅ Voto medio, lista recensioni e form nel profilo impresa
 
 ### 🔶 Milestone 7 — Rifinitura / deploy (da valutare insieme)
+- ✅ Titoli delle pagine e bottoni leggibili con il tema scuro
+- ✅ Interfaccia in italiano e inglese con selettore IT/EN nella navbar (`lib/i18n/`): lingua salvata nel cookie `lang`, altrimenti quella del browser, altrimenti italiano. Tradotti anche errori del server, mestieri e date
 - ⬜ **Prossimo passo:** da definire insieme
 - Mappa con `latitude`/`longitude` (già in schema, non ancora usati)
-- Deploy su Vercel
+- Deploy su Vercel (rimandato: per ora l'app resta in locale)
 - Altro da decidere quando ci arriviamo

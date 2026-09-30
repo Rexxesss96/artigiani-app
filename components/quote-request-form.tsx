@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
+import { useI18n } from "@/components/i18n-provider";
 
 // Client Component: it needs state (the textarea, the "sent!" message)
 // and a mutation, so it can't be a Server Component. The profile page
 // (a Server Component) renders it and passes the company id as a prop.
 
 export function QuoteRequestForm({ companyId }: { companyId: number }) {
+  const { dict } = useI18n();
   const [message, setMessage] = useState("");
   const utils = trpc.useUtils();
 
@@ -29,9 +31,9 @@ export function QuoteRequestForm({ companyId }: { companyId: number }) {
   if (createRequest.isSuccess) {
     return (
       <p className="text-sm text-green-700">
-        Request sent! You can follow it in{" "}
+        {dict.quoteForm.sent}{" "}
         <Link href="/requests" className="underline">
-          My requests
+          {dict.quoteForm.myRequestsLink}
         </Link>
         .
       </p>
@@ -43,7 +45,7 @@ export function QuoteRequestForm({ companyId }: { companyId: number }) {
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder="Describe the job: what you need, where, and when."
+        placeholder={dict.quoteForm.placeholder}
         required
         minLength={10}
         maxLength={2000}
@@ -60,7 +62,7 @@ export function QuoteRequestForm({ companyId }: { companyId: number }) {
         disabled={createRequest.isPending}
         className="cursor-pointer rounded bg-foreground px-4 py-2 text-background disabled:opacity-50"
       >
-        {createRequest.isPending ? "Sending..." : "Send request"}
+        {createRequest.isPending ? dict.quoteForm.sending : dict.quoteForm.send}
       </button>
     </form>
   );

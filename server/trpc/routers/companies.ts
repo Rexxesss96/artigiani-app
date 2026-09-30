@@ -38,7 +38,7 @@ export const companiesRouter = router({
         if (existing) {
           throw new TRPCError({
             code: "CONFLICT",
-            message: "You already have a registered company.",
+            message: ctx.dict.errors.companyAlreadyExists,
           });
         }
 
