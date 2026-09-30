@@ -36,6 +36,25 @@ export const quoteRequestsRouter = router({
         });
       }
 
+      // One open request per company is enough: this stops a customer
+      // from flooding a company with duplicates while it hasn't answered.
+      const pendingRequest = await db.query.quoteRequests.findFirst({
+        where: and(
+          eq(quoteRequests.userId, ctx.session.user.id),
+          eq(quoteRequests.companyId, input.companyId),
+          eq(quoteRequests.status, "pending"),
+        ),
+        columns: { id: true },
+      });
+
+      if (pendingRequest) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message:
+            "You already have a pending request with this company. Wait for its answer.",
+        });
+      }
+
       const [request] = await db
         .insert(quoteRequests)
         .values({
