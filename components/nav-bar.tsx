@@ -26,6 +26,9 @@ export function NavBar() {
       <nav className="flex items-center gap-4 text-sm">
         {isPending ? null : session ? (
           <>
+            <Link href="/requests" className="underline">
+              My requests
+            </Link>
             <Link href="/company" className="underline">
               My company
             </Link>

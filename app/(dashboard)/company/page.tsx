@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
+import Link from "next/link";
+import { ReceivedRequests } from "@/components/received-requests";
 
 export default function CompanyDashboardPage() {
   const router = useRouter();
@@ -68,9 +70,17 @@ export default function CompanyDashboardPage() {
 
   if (myCompany) {
     return (
-      <main className="p-8">
+      <main className="mx-auto w-full max-w-3xl p-8">
         <h1 className="text-2xl font-semibold">{myCompany.businessName}</h1>
-        <p className="text-gray-600">You already have a registered company.</p>
+        <Link
+          href={`/companies/${myCompany.id}`}
+          className="text-sm text-gray-600 underline"
+        >
+          View public profile
+        </Link>
+
+        <h2 className="mt-8 mb-4 text-lg font-semibold">Quote requests</h2>
+        <ReceivedRequests />
       </main>
     );
   }
