@@ -30,7 +30,7 @@ export function ReviewForm({ companyId }: { companyId: number }) {
   }
 
   if (createReview.isSuccess) {
-    return <p className="text-sm text-green-700">{dict.reviewForm.thanks}</p>;
+    return <p className="success-text">{dict.reviewForm.thanks}</p>;
   }
 
   return (
@@ -52,8 +52,10 @@ export function ReviewForm({ companyId }: { companyId: number }) {
                 : format(dict.reviewForm.starOther, { count: value })
             }
             onClick={() => setRating(value)}
-            className={`cursor-pointer text-2xl ${
-              value <= rating ? "text-yellow-500" : "text-gray-300"
+            className={`cursor-pointer text-3xl transition hover:scale-110 ${
+              value <= rating
+                ? "text-amber-500"
+                : "text-stone-300 dark:text-stone-600"
             }`}
           >
             ★
@@ -67,17 +69,17 @@ export function ReviewForm({ companyId }: { companyId: number }) {
         placeholder={dict.reviewForm.placeholder}
         maxLength={1000}
         rows={3}
-        className="w-full rounded border border-gray-300 px-3 py-2"
+        className="input"
       />
 
       {createReview.error && (
-        <p className="text-sm text-red-600">{createReview.error.message}</p>
+        <p className="error-text">{createReview.error.message}</p>
       )}
 
       <button
         type="submit"
         disabled={rating === 0 || createReview.isPending}
-        className="cursor-pointer rounded bg-foreground px-4 py-2 text-background disabled:opacity-50"
+        className="btn btn-primary"
       >
         {createReview.isPending
           ? dict.reviewForm.saving

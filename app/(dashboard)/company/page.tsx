@@ -2,20 +2,26 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
-import Link from "next/link";
 import { ReceivedRequests } from "@/components/received-requests";
+import { CompanyForm } from "@/components/company-form";
+import { CompanyAvatar } from "@/components/company-avatar";
 import { useI18n } from "@/components/i18n-provider";
-import { categoryName } from "@/lib/i18n/dictionaries";
+
+// "My company": registration form if the user has no company yet,
+// otherwise the company dashboard (profile + received requests).
 
 export default function CompanyDashboardPage() {
   const router = useRouter();
+  const utils = trpc.useUtils();
   const { data: session, isPending: sessionPending } = useSession();
   const { dict } = useI18n();
+  const d = dict.dashboard;
 
-  const { data: categories, isPending: categoriesPending } =
-    trpc.categories.list.useQuery();
+  const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const { data: myCompany, isPending: companyPending } =
     trpc.companies.getMine.useQuery(undefined, {
@@ -23,178 +29,120 @@ export default function CompanyDashboardPage() {
     });
 
   const createCompany = trpc.companies.create.useMutation({
-    onSuccess: () => {
-      router.push("/");
+    onSuccess: async () => {
+      await utils.companies.getMine.invalidate();
       router.refresh();
     },
   });
 
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const updateCompany = trpc.companies.update.useMutation({
+    onSuccess: async () => {
+      await utils.companies.getMine.invalidate();
+      setEditing(false);
+      setSaved(true);
+    },
+  });
 
-  function toggleCategory(id: number) {
-    setSelectedCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
-    );
-  }
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-
-    createCompany.mutate({
-      businessName: formData.get("businessName") as string,
-      vatNumber: formData.get("vatNumber") as string,
-      sdiCode: (formData.get("sdiCode") as string) || undefined,
-      address: formData.get("address") as string,
-      city: formData.get("city") as string,
-      province: formData.get("province") as string,
-      postalCode: formData.get("postalCode") as string,
-      phone: (formData.get("phone") as string) || undefined,
-      description: (formData.get("description") as string) || undefined,
-      categoryIds: selectedCategories,
-    });
-  }
-
-  if (sessionPending) {
-    return <p className="p-8">{dict.common.loading}</p>;
+  if (sessionPending || (session && companyPending)) {
+    return <p className="container-page text-muted">{dict.common.loading}</p>;
   }
 
   if (!session) {
     return (
-      <main className="p-8">
-        <p>{dict.dashboard.loginRequired}</p>
+      <main className="container-page">
+        <p className="card">
+          {d.loginRequired}{" "}
+          <Link href="/login" className="link">
+            {dict.nav.login}
+          </Link>
+        </p>
       </main>
     );
   }
 
-  if (companyPending) {
-    return <p className="p-8">{dict.common.loading}</p>;
-  }
-
-  if (myCompany) {
+  // ---------- No company yet: registration ----------
+  if (!myCompany) {
     return (
-      <main className="mx-auto w-full max-w-3xl p-8">
-        <h1 className="text-2xl font-semibold">{myCompany.businessName}</h1>
-        <Link
-          href={`/companies/${myCompany.id}`}
-          className="text-sm text-gray-600 underline"
-        >
-          {dict.dashboard.viewProfile}
-        </Link>
-
-        <h2 className="mt-8 mb-4 text-lg font-semibold">
-          {dict.dashboard.quoteRequests}
-        </h2>
-        <ReceivedRequests />
+      <main className="container-page max-w-2xl">
+        <h1 className="text-2xl font-bold tracking-tight">{d.registerTitle}</h1>
+        <p className="mt-1 text-muted">{d.registerSubtitle}</p>
+        <div className="card mt-6">
+          <CompanyForm
+            mode="create"
+            onSubmit={(values) => createCompany.mutate(values)}
+            isPending={createCompany.isPending}
+            error={createCompany.error?.message}
+          />
+        </div>
       </main>
     );
   }
+
+  // ---------- Company dashboard ----------
+  // The form works with plain values: turn the DB row (nulls, joined
+  // categories) into what CompanyForm expects.
+  const initialValues = {
+    businessName: myCompany.businessName,
+    address: myCompany.address,
+    city: myCompany.city,
+    province: myCompany.province,
+    postalCode: myCompany.postalCode,
+    phone: myCompany.phone ?? undefined,
+    description: myCompany.description ?? undefined,
+    categoryIds: myCompany.categories.map((c) => c.categoryId),
+  };
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-8">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-lg space-y-4 rounded-lg border border-gray-200 p-6"
-      >
-        <h1 className="text-2xl font-semibold">
-          {dict.dashboard.registerTitle}
-        </h1>
-
-        <input
-          name="businessName"
-          placeholder={dict.dashboard.businessName}
-          required
-          className="w-full rounded border border-gray-300 px-3 py-2"
-        />
-        <input
-          name="vatNumber"
-          placeholder={dict.dashboard.vatNumber}
-          required
-          minLength={11}
-          maxLength={11}
-          className="w-full rounded border border-gray-300 px-3 py-2"
-        />
-        <input
-          name="sdiCode"
-          placeholder={dict.dashboard.sdiCode}
-          maxLength={7}
-          className="w-full rounded border border-gray-300 px-3 py-2"
-        />
-        <input
-          name="address"
-          placeholder={dict.dashboard.address}
-          required
-          className="w-full rounded border border-gray-300 px-3 py-2"
-        />
-
-        <div className="flex gap-3">
-          <input
-            name="city"
-            placeholder={dict.dashboard.city}
-            required
-            className="w-1/2 rounded border border-gray-300 px-3 py-2"
-          />
-          <input
-            name="province"
-            placeholder={dict.dashboard.province}
-            required
-            maxLength={2}
-            className="w-1/4 rounded border border-gray-300 px-3 py-2"
-          />
-          <input
-            name="postalCode"
-            placeholder={dict.dashboard.postalCode}
-            required
-            maxLength={5}
-            className="w-1/4 rounded border border-gray-300 px-3 py-2"
-          />
+    <main className="container-page max-w-3xl">
+      <section className="card flex flex-wrap items-center gap-4">
+        <CompanyAvatar name={myCompany.businessName} size="lg" />
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {myCompany.businessName}
+          </h1>
+          <p className="text-sm text-muted">{d.subtitle}</p>
         </div>
-
-        <input
-          name="phone"
-          placeholder={dict.dashboard.phone}
-          className="w-full rounded border border-gray-300 px-3 py-2"
-        />
-        <textarea
-          name="description"
-          placeholder={dict.dashboard.description}
-          className="w-full rounded border border-gray-300 px-3 py-2"
-        />
-
-        <div>
-          <p className="mb-2 text-sm font-medium">{dict.dashboard.trades}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {categoriesPending && <p>{dict.dashboard.loadingCategories}</p>}
-            {categories?.map((category) => (
-              <label
-                key={category.id}
-                className="flex items-center gap-2 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedCategories.includes(category.id)}
-                  onChange={() => toggleCategory(category.id)}
-                />
-                {categoryName(dict, category)}
-              </label>
-            ))}
-          </div>
+        <div className="flex gap-2">
+          <Link
+            href={`/companies/${myCompany.id}`}
+            className="btn btn-secondary"
+          >
+            {d.viewProfile}
+          </Link>
+          {!editing && (
+            <button
+              onClick={() => {
+                setEditing(true);
+                setSaved(false);
+              }}
+              className="btn btn-primary"
+            >
+              {d.editProfile}
+            </button>
+          )}
         </div>
+      </section>
 
-        {createCompany.error && (
-          <p className="text-sm text-red-600">{createCompany.error.message}</p>
-        )}
+      {saved && <p className="success-text mt-3">{d.saved}</p>}
 
-        <button
-          type="submit"
-          disabled={createCompany.isPending || selectedCategories.length === 0}
-          className="w-full rounded bg-foreground py-2 text-background disabled:opacity-50 cursor-pointer"
-        >
-          {createCompany.isPending
-            ? dict.dashboard.creating
-            : dict.dashboard.register}
-        </button>
-      </form>
+      {editing && (
+        <section className="card mt-6">
+          <h2 className="mb-4 text-lg font-semibold">{d.editProfile}</h2>
+          <CompanyForm
+            mode="edit"
+            initial={initialValues}
+            // The server ignores fields it doesn't expect (like the
+            // empty vatNumber): zod drops unknown keys.
+            onSubmit={(values) => updateCompany.mutate(values)}
+            isPending={updateCompany.isPending}
+            error={updateCompany.error?.message}
+            onCancel={() => setEditing(false)}
+          />
+        </section>
+      )}
+
+      <h2 className="mt-8 mb-4 text-lg font-semibold">{d.quoteRequests}</h2>
+      <ReceivedRequests />
     </main>
   );
 }

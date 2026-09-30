@@ -19,52 +19,63 @@ export default function MyRequestsPage() {
     });
 
   if (sessionPending) {
-    return <p className="p-8">{dict.common.loading}</p>;
+    return <p className="container-page text-muted">{dict.common.loading}</p>;
   }
 
   if (!session) {
     return (
-      <main className="p-8">
-        <p>{dict.requestsPage.loginRequired}</p>
+      <main className="container-page">
+        <p className="card">
+          {dict.requestsPage.loginRequired}{" "}
+          <Link href="/login" className="link">
+            {dict.nav.login}
+          </Link>
+        </p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl p-8">
-      <h1 className="text-2xl font-semibold">{dict.requestsPage.title}</h1>
+    <main className="container-page max-w-3xl">
+      <h1 className="text-2xl font-bold tracking-tight">
+        {dict.requestsPage.title}
+      </h1>
+      <p className="mt-1 text-muted">{dict.requestsPage.subtitle}</p>
 
-      {requestsPending && <p className="mt-4">{dict.common.loading}</p>}
+      {requestsPending && (
+        <p className="mt-6 text-muted">{dict.common.loading}</p>
+      )}
 
       {requests?.length === 0 && (
-        <p className="mt-4 text-gray-600">
+        <p className="card mt-6">
           {dict.requestsPage.empty}{" "}
-          <Link href="/" className="underline">
+          <Link href="/" className="link">
             {dict.requestsPage.findCompany}
           </Link>
-          .
         </p>
       )}
 
       <ul className="mt-6 flex flex-col gap-4">
         {requests?.map((request) => (
-          <li key={request.id} className="rounded border border-gray-200 p-4">
-            <div className="flex items-center justify-between gap-4">
-              <Link
-                href={`/companies/${request.company.id}`}
-                className="font-semibold underline"
-              >
-                {request.company.businessName}
-              </Link>
+          <li key={request.id} className="card">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Link
+                  href={`/companies/${request.company.id}`}
+                  className="font-semibold hover:text-accent"
+                >
+                  {request.company.businessName}
+                </Link>
+                <p className="text-xs text-muted">
+                  {request.company.city} ·{" "}
+                  {new Date(request.createdAt).toLocaleDateString(
+                    dateLocales[locale],
+                  )}
+                </p>
+              </div>
               <StatusBadge status={request.status} />
             </div>
-            <p className="mt-1 text-xs text-gray-500">
-              {new Date(request.createdAt).toLocaleDateString(
-                dateLocales[locale],
-              )}{" "}
-              · {request.company.city}
-            </p>
-            <p className="mt-2 whitespace-pre-line text-sm">
+            <p className="mt-3 whitespace-pre-line text-sm">
               {request.message}
             </p>
           </li>

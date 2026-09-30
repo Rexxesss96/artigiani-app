@@ -14,17 +14,19 @@ export function LanguageSwitcher() {
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div className="flex gap-1" role="group" aria-label={dict.nav.language}>
+    <div
+      className="flex rounded-lg border border-border p-0.5"
+      role="group"
+      aria-label={dict.nav.language}
+    >
       {locales.map((l) => (
         <button
           key={l}
           onClick={() => startTransition(() => setLocale(l))}
           disabled={isPending}
           aria-pressed={l === locale}
-          className={`cursor-pointer rounded px-2 py-1 text-xs uppercase disabled:opacity-50 ${
-            l === locale
-              ? "bg-foreground text-background"
-              : "border border-gray-300"
+          className={`cursor-pointer rounded-md px-2 py-0.5 text-xs font-medium uppercase transition disabled:opacity-50 ${
+            l === locale ? "bg-foreground text-background" : "text-muted"
           }`}
         >
           {l}

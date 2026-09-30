@@ -34,7 +34,7 @@ npm run dev
 | Email | Ruolo | Cosa puoi provare |
 | --- | --- | --- |
 | `cliente@demo.test` | Cliente (Giulia Bianchi) | Cercare imprese, inviare richieste, vedere "Le mie richieste", recensire Ferrari Impianti (già fatto) |
-| `impresa@demo.test` | Impresa (Ferrari Impianti, Varese) | Dashboard "La mia impresa": richieste ricevute, Accetta/Rifiuta |
+| `impresa@demo.test` | Impresa (Ferrari Impianti, Varese) | Dashboard "La mia impresa": richieste ricevute, Accetta/Rifiuta, Modifica profilo |
 | `luca.moretti@demo.test` | Cliente (Luca Moretti) | Richieste accettate da Ferrari Impianti e Greco Colori, già recensite; una richiesta in attesa |
 | `lucia.colombo@demo.test`, `andrea.russo@demo.test`, `sara.greco@demo.test`, `paolo.marino@demo.test`, `elena.conti@demo.test` | Imprese | Altre imprese demo |
 

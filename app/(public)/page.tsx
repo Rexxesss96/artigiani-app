@@ -4,6 +4,8 @@ import { createContext } from "@/server/trpc/context";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { getDictionary } from "@/lib/i18n/server";
 import { categoryName, format } from "@/lib/i18n/dictionaries";
+import { CompanyAvatar } from "@/components/company-avatar";
+import { Stars } from "@/components/stars";
 
 // Public home page: search form + results list.
 // Server Component — the filters live in the URL (/?city=Roma&category=2),
@@ -40,90 +42,115 @@ export default async function HomePage({
   const hasFilters = city !== "" || categoryId !== undefined;
 
   return (
-    <main className="mx-auto w-full max-w-3xl p-8">
-      <h1 className="text-3xl font-bold">{dict.home.title}</h1>
+    <main className="container-page">
+      <section className="py-6 sm:py-10">
+        <h1 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
+          {dict.home.title}
+        </h1>
+        <p className="mt-3 max-w-2xl text-muted">{dict.home.subtitle}</p>
 
-      {/* action="" = stay on this page, only the search params change */}
-      <Form action="" className="mt-6 flex flex-wrap items-end gap-3">
-        <label className="flex flex-col text-sm">
-          {dict.home.city}
-          <input
-            name="city"
-            defaultValue={city}
-            placeholder={dict.home.cityPlaceholder}
-            className="mt-1 rounded border border-gray-300 px-3 py-2"
-          />
-        </label>
-
-        <label className="flex flex-col text-sm">
-          {dict.home.trade}
-          <select
-            name="category"
-            defaultValue={categoryId ?? ""}
-            className="mt-1 rounded border border-gray-300 px-3 py-2"
-          >
-            <option value="">{dict.home.allTrades}</option>
-            {categories
-              // Sorted by the translated name, so the list is alphabetical
-              // in the visitor's language.
-              .toSorted((a, b) =>
-                categoryName(dict, a).localeCompare(categoryName(dict, b)),
-              )
-              .map((category) => (
-                <option key={category.id} value={category.id}>
-                  {categoryName(dict, category)}
-                </option>
-              ))}
-          </select>
-        </label>
-
-        <button
-          type="submit"
-          className="cursor-pointer rounded bg-foreground px-4 py-2 text-background"
+        {/* action="" = stay on this page, only the search params change */}
+        <Form
+          action=""
+          className="card mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-          {dict.home.search}
-        </button>
+          <label>
+            <span className="label">{dict.home.city}</span>
+            <input
+              name="city"
+              defaultValue={city}
+              placeholder={dict.home.cityPlaceholder}
+              className="input"
+            />
+          </label>
 
+          <label>
+            <span className="label">{dict.home.trade}</span>
+            <select
+              name="category"
+              defaultValue={categoryId ?? ""}
+              className="input"
+            >
+              <option value="">{dict.home.allTrades}</option>
+              {categories
+                // Sorted by the translated name, so the list is alphabetical
+                // in the visitor's language.
+                .toSorted((a, b) =>
+                  categoryName(dict, a).localeCompare(categoryName(dict, b)),
+                )
+                .map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {categoryName(dict, category)}
+                  </option>
+                ))}
+            </select>
+          </label>
+
+          <button type="submit" className="btn btn-primary">
+            {dict.home.search}
+          </button>
+        </Form>
+      </section>
+
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted">
+          {companies.length === 0
+            ? dict.home.noResults
+            : companies.length === 1
+              ? dict.home.resultsOne
+              : format(dict.home.resultsOther, { count: companies.length })}
+        </p>
         {hasFilters && (
-          <Link href="/" className="py-2 text-sm underline">
+          <Link href="/" className="link text-sm">
             {dict.home.clearFilters}
           </Link>
         )}
-      </Form>
+      </div>
 
-      <p className="mt-6 text-sm text-gray-600">
-        {companies.length === 0
-          ? dict.home.noResults
-          : companies.length === 1
-            ? dict.home.resultsOne
-            : format(dict.home.resultsOther, { count: companies.length })}
-      </p>
+      {companies.length === 0 && hasFilters && (
+        <p className="mt-2 text-sm text-muted">{dict.home.noResultsHint}</p>
+      )}
 
-      <ul className="mt-4 flex flex-col gap-4">
+      <ul className="mt-4 grid gap-4 md:grid-cols-2">
         {companies.map((company) => (
           <li key={company.id}>
             <Link
               href={`/companies/${company.id}`}
-              className="block rounded border border-gray-200 p-4 hover:border-gray-400"
+              className="card flex h-full gap-4 transition hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md"
             >
-              <h2 className="text-lg font-semibold">{company.businessName}</h2>
-              <p className="text-sm text-gray-600">
-                {company.city} ({company.province})
-              </p>
-              {company.description && (
-                <p className="mt-2 line-clamp-2 text-sm">
-                  {company.description}
+              <CompanyAvatar name={company.businessName} />
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate font-semibold">
+                  {company.businessName}
+                </h2>
+                <p className="text-sm text-muted">
+                  {company.city} ({company.province})
                 </p>
-              )}
-              <div className="mt-3 flex flex-wrap gap-2">
-                {company.categories.map((c) => (
-                  <span
-                    key={c.categoryId}
-                    className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-800"
-                  >
-                    {categoryName(dict, c.category)}
-                  </span>
-                ))}
+                {company.averageRating !== null && (
+                  <p className="mt-1 flex items-center gap-1 text-sm">
+                    <Stars
+                      rating={company.averageRating}
+                      label={format(dict.reviewForm.outOfFive, {
+                        rating: company.averageRating.toFixed(1),
+                      })}
+                    />
+                    <span className="text-muted">
+                      {company.averageRating.toFixed(1)} ({company.reviewCount})
+                    </span>
+                  </p>
+                )}
+                {company.description && (
+                  <p className="mt-2 line-clamp-2 text-sm">
+                    {company.description}
+                  </p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {company.categories.map((c) => (
+                    <span key={c.categoryId} className="chip">
+                      {categoryName(dict, c.category)}
+                    </span>
+                  ))}
+                </div>
               </div>
             </Link>
           </li>

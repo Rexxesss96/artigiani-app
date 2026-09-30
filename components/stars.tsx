@@ -3,9 +3,15 @@
 export function Stars({ rating, label }: { rating: number; label: string }) {
   const full = Math.round(rating);
   return (
-    <span className="text-yellow-500" role="img" aria-label={label}>
+    <span
+      className="whitespace-nowrap text-amber-500"
+      role="img"
+      aria-label={label}
+    >
       {"★".repeat(full)}
-      <span className="text-gray-300">{"★".repeat(5 - full)}</span>
+      <span className="text-stone-300 dark:text-stone-600">
+        {"★".repeat(5 - full)}
+      </span>
     </span>
   );
 }

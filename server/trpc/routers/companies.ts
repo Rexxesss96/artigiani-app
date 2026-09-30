@@ -5,22 +5,28 @@ import { companies, companiesCategories, user } from "@/server/db/schema";
 import { and, asc, eq, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
+// Fields a company can fill in, shared by `create` and `update`.
+// (The VAT number is only set once, at creation: it identifies the company.)
+const companyFields = {
+  businessName: z.string().trim().min(2).max(100),
+  sdiCode: z.string().trim().max(7).optional(),
+  address: z.string().trim().min(3).max(100),
+  city: z.string().trim().min(2).max(60),
+  province: z.string().trim().length(2),
+  postalCode: z.string().trim().length(5),
+  phone: z.string().trim().max(20).optional(),
+  description: z.string().trim().max(2000).optional(),
+  categoryIds: z.array(z.number().int().positive()).min(1),
+};
+
 export const companiesRouter = router({
   // Creates a company for the logged-in user and promotes them to "company".
 
   create: protectedProcedure
     .input(
       z.object({
-        businessName: z.string().min(2).max(100),
-        vatNumber: z.string().length(11),
-        sdiCode: z.string().max(7).optional(),
-        address: z.string().min(3).max(100),
-        city: z.string().min(2).max(60),
-        province: z.string().length(2),
-        postalCode: z.string().length(5),
-        phone: z.string().max(20).optional(),
-        description: z.string().optional(),
-        categoryIds: z.array(z.number()).min(1),
+        ...companyFields,
+        vatNumber: z.string().trim().length(11),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -71,6 +77,49 @@ export const companiesRouter = router({
       return company;
     }),
 
+  // Updates the logged-in user's company and replaces its categories.
+
+  update: protectedProcedure
+    .input(z.object(companyFields))
+    .mutation(async ({ ctx, input }) => {
+      const { categoryIds, ...companyData } = input;
+
+      return db.transaction(async (tx) => {
+        const [updated] = await tx
+          .update(companies)
+          .set({
+            ...companyData,
+            // An emptied optional field is saved as NULL, not "".
+            sdiCode: companyData.sdiCode || null,
+            phone: companyData.phone || null,
+            description: companyData.description || null,
+          })
+          .where(eq(companies.userId, ctx.session.user.id))
+          .returning();
+
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: ctx.dict.errors.companyNotFound,
+          });
+        }
+
+        // Simplest way to "change" a many-to-many list: delete the old
+        // links and insert the new ones, inside the same transaction.
+        await tx
+          .delete(companiesCategories)
+          .where(eq(companiesCategories.companyId, updated.id));
+        await tx.insert(companiesCategories).values(
+          categoryIds.map((categoryId) => ({
+            companyId: updated.id,
+            categoryId,
+          })),
+        );
+
+        return updated;
+      });
+    }),
+
   // Returns the logged-in user's company (if they have one), with categories.
 
   getMine: protectedProcedure.query(async ({ ctx }) => {
@@ -119,7 +168,7 @@ export const companiesRouter = router({
           : undefined,
       ];
 
-      return db.query.companies.findMany({
+      const results = await db.query.companies.findMany({
         where: and(...conditions),
         orderBy: asc(companies.businessName),
         limit: 50,
@@ -134,8 +183,19 @@ export const companiesRouter = router({
           categories: {
             with: { category: true },
           },
+          // Only the ratings, to show the average in the result cards.
+          reviews: { columns: { rating: true } },
         },
       });
+
+      return results.map(({ reviews, ...company }) => ({
+        ...company,
+        reviewCount: reviews.length,
+        averageRating:
+          reviews.length === 0
+            ? null
+            : reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length,
+      }));
     }),
 
   // Returns a company by id with its linked categories (public query).
