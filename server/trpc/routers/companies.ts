@@ -2,7 +2,7 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { db } from "@/server/db";
 import { companies, companiesCategories, user } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const companiesRouter = router({
@@ -83,6 +83,56 @@ export const companiesRouter = router({
       },
     });
   }),
+
+  // Public search: lists companies, optionally filtered by city and/or
+  // category. Both filters are optional — with no filters it returns
+  // every company (capped by `limit`).
+
+  search: publicProcedure
+    .input(
+      z.object({
+        city: z.string().trim().max(60).optional(),
+        categoryId: z.number().int().positive().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      // Each filter becomes one SQL condition; `and()` skips the
+      // undefined ones, so a missing filter simply doesn't apply.
+      const conditions = [
+        // ilike = case-insensitive LIKE: "rom" matches "Roma" and "ROMA"
+        input.city ? ilike(companies.city, `%${input.city}%`) : undefined,
+
+        // The category lives in the join table, so we keep only the
+        // companies whose id appears there next to the chosen category.
+        input.categoryId
+          ? inArray(
+              companies.id,
+              db
+                .select({ id: companiesCategories.companyId })
+                .from(companiesCategories)
+                .where(eq(companiesCategories.categoryId, input.categoryId)),
+            )
+          : undefined,
+      ];
+
+      return db.query.companies.findMany({
+        where: and(...conditions),
+        orderBy: asc(companies.businessName),
+        limit: 50,
+        columns: {
+          id: true,
+          businessName: true,
+          city: true,
+          province: true,
+          description: true,
+        },
+        with: {
+          categories: {
+            with: { category: true },
+          },
+        },
+      });
+    }),
 
   // Returns a company by id with its linked categories (public query).
 
