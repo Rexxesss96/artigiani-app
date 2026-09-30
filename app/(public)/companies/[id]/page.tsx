@@ -3,6 +3,8 @@ import { appRouter } from "@/server/trpc/routers/_app";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { QuoteRequestForm } from "@/components/quote-request-form";
+import { ReviewForm } from "@/components/review-form";
+import { Stars } from "@/components/stars";
 
 // Public Server Component that renders a company's profile page.
 
@@ -29,9 +31,22 @@ export default async function CompanyProfilePage({
   const myCompany = ctx.session ? await caller.companies.getMine() : null;
   const isOwnCompany = myCompany?.id === company.id;
 
+  const { average, reviews } = await caller.reviews.listByCompany({
+    companyId: company.id,
+  });
+  const eligibility = ctx.session
+    ? await caller.reviews.canReview({ companyId: company.id })
+    : null;
+
   return (
     <main className="p-8">
       <h1 className="text-2xl font-semibold">{company.businessName}</h1>
+      {average !== null && (
+        <p className="text-sm">
+          <Stars rating={average} /> {average.toFixed(1)} ({reviews.length}{" "}
+          {reviews.length === 1 ? "review" : "reviews"})
+        </p>
+      )}
       <p className="text-gray-600">
         {company.address}, {company.city}, ({company.province}){" "}
         {company.postalCode}
@@ -65,6 +80,45 @@ export default async function CompanyProfilePage({
           <p className="text-sm text-gray-600">This is your company.</p>
         ) : (
           <QuoteRequestForm companyId={company.id} />
+        )}
+      </section>
+
+      <section className="mt-8 max-w-lg">
+        <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
+
+        {eligibility?.canReview && (
+          <div className="mb-6">
+            <ReviewForm companyId={company.id} />
+          </div>
+        )}
+        {eligibility && !eligibility.canReview && !isOwnCompany && (
+          <p className="mb-4 text-sm text-gray-600">{eligibility.reason}</p>
+        )}
+
+        {reviews.length === 0 ? (
+          <p className="text-sm text-gray-600">No reviews yet.</p>
+        ) : (
+          <ul className="flex flex-col gap-4">
+            {reviews.map((review) => (
+              <li
+                key={review.id}
+                className="rounded border border-gray-200 p-4"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <Stars rating={review.rating} />
+                  <span className="text-xs text-gray-500">
+                    {review.author} ·{" "}
+                    {review.createdAt.toLocaleDateString("en-GB")}
+                  </span>
+                </div>
+                {review.comment && (
+                  <p className="mt-2 whitespace-pre-line text-sm">
+                    {review.comment}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </main>
