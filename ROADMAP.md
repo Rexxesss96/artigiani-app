@@ -6,10 +6,10 @@ Questo file è la fonte di verità su **a che punto siamo**. Non fidarti della m
 
 ## Come lavoriamo
 
-- Il codice lo scrive **l'utente** (sta imparando a fare sviluppo web, laureato/a in informatica ma con poca pratica). Claude spiega i concetti, propone il prossimo passo piccolo e concreto, fa review del codice scritto, aiuta con git.
-- Un passo alla volta: non si scrive tutta una milestone in un colpo. Si spiega il "perché" prima del "come".
-- Flusso git: branch `feat/<nome>` per ogni pezzo di milestone → PR su GitHub (`Rexxesss96/artigiani-app`) → merge su `main`.
-- A ogni passo completato e pushato, aggiornare questo file (spuntare, spostare la riga "prossimo passo").
+- Da ottobre 2026 il codice lo scrive **Claude**, una feature alla volta, e spiega ogni volta cosa ha fatto e perché (il progetto serve anche all'utente per imparare JavaScript/TypeScript). L'utente decide la direzione e può fermare o cambiare qualsiasi cosa.
+- Flusso git: un branch per feature → PR su GitHub (`Rexxesss96/artigiani-app`) → typecheck + eslint verdi → review → merge su `main`. Claude fa il merge (autorizzato dall'utente).
+- Review: CodeRabbit ha un limite di una review all'ora sul piano attuale; Claude rilegge comunque il diff prima di ogni merge.
+- A ogni passo completato, aggiornare questo file (spuntare, spostare la riga "prossimo passo").
 
 ## Stato milestone
 
@@ -29,16 +29,17 @@ Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/reg
 - ✅ `companies.search` — query pubblica con filtri opzionali (`categoryId`, `city`), città case-insensitive e parziale, max 50 risultati ordinati per nome
 - ✅ `app/(public)/page.tsx` — form di ricerca (`next/form`, filtri nell'URL) + lista risultati con link ai profili impresa della Milestone 3
 
-### 🔶 Milestone 5 — Richieste di preventivo
+### ✅ Milestone 5 — Richieste di preventivo
+- ✅ Router `quoteRequests` (`create`, `listSent`, `listReceived`, `updateStatus`), regole verificate lato server: niente richieste alla propria impresa, una sola richiesta `pending` per impresa, solo l'impresa destinataria cambia lo stato e solo da `pending`
+- ✅ Form "Request a quote" nel profilo impresa, pagina `/requests` per il cliente, richieste ricevute con Accept/Reject nella dashboard `/company`
+
+### ✅ Milestone 6 — Recensioni
+- ✅ Router `reviews` (`listByCompany` pubblico con media, `canReview`, `create`)
+- ✅ Può recensire solo chi ha una richiesta di preventivo **accettata** da quell'impresa, una sola volta
+- ✅ Voto medio, lista recensioni e form nel profilo impresa
+
+### 🔶 Milestone 7 — Rifinitura / deploy (da valutare insieme)
 - ⬜ **Prossimo passo:** da definire insieme
-- Cliente autenticato invia richiesta a un'impresa (`quote_requests`, stato `pending`)
-- Dashboard impresa: vede le richieste ricevute, le accetta/rifiuta
-
-### ⬜ Milestone 6 — Recensioni
-- Cliente lascia voto (1-5) + commento su un'impresa (`reviews`)
-- Mostrare le recensioni nella pagina profilo impresa (Milestone 3)
-
-### ⬜ Milestone 7 — Rifinitura / deploy (da valutare insieme)
 - Mappa con `latitude`/`longitude` (già in schema, non ancora usati)
 - Deploy su Vercel
 - Altro da decidere quando ci arriviamo
