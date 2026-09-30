@@ -8,6 +8,7 @@ import { QuoteRequestForm } from "@/components/quote-request-form";
 import { ReviewForm } from "@/components/review-form";
 import { Stars } from "@/components/stars";
 import { CompanyAvatar } from "@/components/company-avatar";
+import { CompanyMap } from "@/components/company-map";
 import { getDictionary } from "@/lib/i18n/server";
 import { categoryName, format } from "@/lib/i18n/dictionaries";
 import { dateLocales } from "@/lib/i18n/config";
@@ -67,6 +68,15 @@ export default async function CompanyProfilePage({
   const eligibility = ctx.session
     ? await caller.reviews.canReview({ companyId: company.id })
     : null;
+
+  // Coordinates are stored as text: convert and check they are real numbers.
+  const latitude = Number(company.latitude);
+  const longitude = Number(company.longitude);
+  const hasMap =
+    company.latitude !== null &&
+    company.longitude !== null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
 
   const ratingLabel = (rating: number | string) =>
     format(dict.reviewForm.outOfFive, { rating });
@@ -190,6 +200,18 @@ export default async function CompanyProfilePage({
                   {format(dict.profile.phone, { phone: company.phone })}
                 </a>
               </p>
+            )}
+            {hasMap && (
+              <div className="mt-4">
+                <CompanyMap
+                  latitude={latitude}
+                  longitude={longitude}
+                  title={format(dict.profile.map, {
+                    name: company.businessName,
+                  })}
+                  openLabel={dict.profile.openMap}
+                />
+              </div>
             )}
           </section>
 

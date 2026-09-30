@@ -37,6 +37,8 @@ export const en = {
   profile: {
     about: "About",
     contacts: "Contacts",
+    map: "Map of {name}",
+    openMap: "Open larger map",
     address: "Address",
     phone: "Phone: {phone}",
     requestQuote: "Request a quote",
