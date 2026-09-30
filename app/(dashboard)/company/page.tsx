@@ -181,7 +181,7 @@ export default function CompanyDashboardPage() {
         <button
           type="submit"
           disabled={createCompany.isPending || selectedCategories.length === 0}
-          className="w-full rounded bg-black py-2 text-white disabled:opacity-50 cursor-pointer"
+          className="w-full rounded bg-foreground py-2 text-background disabled:opacity-50 cursor-pointer"
         >
           {createCompany.isPending ? "Creating..." : "Register company"}
         </button>

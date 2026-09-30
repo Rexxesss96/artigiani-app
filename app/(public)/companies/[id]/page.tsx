@@ -1,10 +1,35 @@
 import { createContext } from "@/server/trpc/context";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { cache } from "react";
 import Link from "next/link";
 import { QuoteRequestForm } from "@/components/quote-request-form";
 import { ReviewForm } from "@/components/review-form";
 import { Stars } from "@/components/stars";
+
+// cache() makes the two calls below (generateMetadata and the page)
+// share ONE database query per request instead of running it twice.
+const getCompany = cache(async (companyId: number) => {
+  const caller = appRouter.createCaller(await createContext());
+  return caller.companies.getById({ id: companyId });
+});
+
+function parseId(id: string) {
+  const companyId = Number(id);
+  return Number.isInteger(companyId) && companyId > 0 ? companyId : null;
+}
+
+// Sets the browser tab title to the company name.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const companyId = parseId((await params).id);
+  const company = companyId ? await getCompany(companyId) : null;
+  return { title: company?.businessName ?? "Company not found" };
+}
 
 // Public Server Component that renders a company's profile page.
 
@@ -13,15 +38,14 @@ export default async function CompanyProfilePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const companyId = Number(id);
-  if (!Number.isInteger(companyId) || companyId <= 0) {
+  const companyId = parseId((await params).id);
+  if (!companyId) {
     notFound();
   }
 
   const ctx = await createContext();
   const caller = appRouter.createCaller(ctx);
-  const company = await caller.companies.getById({ id: companyId });
+  const company = await getCompany(companyId);
 
   if (!company) {
     notFound();

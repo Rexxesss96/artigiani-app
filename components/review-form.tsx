@@ -66,7 +66,7 @@ export function ReviewForm({ companyId }: { companyId: number }) {
       <button
         type="submit"
         disabled={rating === 0 || createReview.isPending}
-        className="cursor-pointer rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+        className="cursor-pointer rounded bg-foreground px-4 py-2 text-background disabled:opacity-50"
       >
         {createReview.isPending ? "Saving..." : "Publish review"}
       </button>
