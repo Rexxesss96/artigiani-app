@@ -25,11 +25,12 @@ Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/reg
 - ✅ Selezione categorie/mestieri in fase di registrazione (`companies_categories`)
 - ✅ Pagina profilo pubblico impresa (`companies.getById` + `app/(public)/companies/[id]/page.tsx`, Server Component — primo pezzo scritto senza `"use client"`)
 
-### 🔶 Milestone 4 — Ricerca pubblica imprese
-- ⬜ **Prossimo passo:** `companies.search` — query pubblica con filtri opzionali (`categoryId`, `city`)
-- ⬜ `app/(public)/page.tsx` — da pagina statica ("Search coming in the next milestone") a form di ricerca + lista risultati, con link ai profili impresa della Milestone 3
+### ✅ Milestone 4 — Ricerca pubblica imprese
+- ✅ `companies.search` — query pubblica con filtri opzionali (`categoryId`, `city`), città case-insensitive e parziale, max 50 risultati ordinati per nome
+- ✅ `app/(public)/page.tsx` — form di ricerca (`next/form`, filtri nell'URL) + lista risultati con link ai profili impresa della Milestone 3
 
-### ⬜ Milestone 5 — Richieste di preventivo
+### 🔶 Milestone 5 — Richieste di preventivo
+- ⬜ **Prossimo passo:** da definire insieme
 - Cliente autenticato invia richiesta a un'impresa (`quote_requests`, stato `pending`)
 - Dashboard impresa: vede le richieste ricevute, le accetta/rifiuta
 
