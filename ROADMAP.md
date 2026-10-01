@@ -58,7 +58,7 @@ Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/reg
 
 ### 🔶 Milestone 9 — Lavori piccoli e grandi
 - ✅ **Lavori con più imprese**: il cliente pubblica un lavoro (mestiere, città, descrizione, foto, urgenza, dimensione, budget) e lo invia fino a 5 imprese; confronta i preventivi, sceglie, segna come completato; la recensione si sblocca solo a lavoro completato
-- ⬜ Pronto intervento e zona servita (km) delle imprese, filtro "pronto intervento"
+- ✅ Pronto intervento e zona servita (km) delle imprese: la ricerca per città trova anche chi ci arriva da fuori (distanza calcolata con le coordinate), filtro "pronto intervento", ordinamento per distanza; nei lavori urgenti le imprese più vicine vengono suggerite per prime
 - ⬜ Chat tra cliente e impresa dentro ogni richiesta, con proposta di sopralluogo (data e ora)
 - ⬜ Avvisi nell'app anche per il cliente (nuovi preventivi, nuovi messaggi)
 

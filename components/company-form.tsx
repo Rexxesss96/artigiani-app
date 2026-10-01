@@ -20,6 +20,8 @@ export type CompanyFormValues = {
   phone?: string;
   description?: string;
   categoryIds: number[];
+  emergencyService: boolean;
+  serviceRadiusKm: number;
 };
 
 type Props = {
@@ -71,6 +73,9 @@ export function CompanyForm({
       phone: get("phone") || undefined,
       description: get("description") || undefined,
       categoryIds: selectedCategories,
+      // A checkbox is in the FormData only when it's ticked.
+      emergencyService: formData.get("emergencyService") === "on",
+      serviceRadiusKm: Number(get("serviceRadiusKm")) || 20,
     });
   }
 
@@ -176,6 +181,30 @@ export function CompanyForm({
           className="input"
         />
       </label>
+
+      <div className="grid gap-4 sm:grid-cols-2 sm:items-end">
+        <label className="block">
+          <span className="label">{d.radiusLabel}</span>
+          <input
+            name="serviceRadiusKm"
+            type="number"
+            min={1}
+            max={200}
+            required
+            defaultValue={initial?.serviceRadiusKm ?? 20}
+            className="input"
+          />
+        </label>
+        <label className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+          <input
+            type="checkbox"
+            name="emergencyService"
+            defaultChecked={initial?.emergencyService}
+            className="accent-accent"
+          />
+          {d.emergencyLabel}
+        </label>
+      </div>
 
       <fieldset>
         <legend className="label">{d.trades}</legend>

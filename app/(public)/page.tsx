@@ -35,17 +35,26 @@ export default async function HomePage({
       ? categoryParam
       : undefined;
   // Anything other than the expected values falls back to the default.
-  const sort = params.sort === "rating" ? "rating" : "name";
+  const sort =
+    params.sort === "rating" || params.sort === "distance"
+      ? params.sort
+      : "name";
+  const emergency = params.emergency === "1";
   const view = params.view === "map" ? "map" : "list";
 
   const { dict } = await getDictionary();
   const caller = appRouter.createCaller(await createContext());
   const [categories, companies] = await Promise.all([
     caller.categories.list(),
-    caller.companies.search({ city: city || undefined, categoryId, sort }),
+    caller.companies.search({
+      city: city || undefined,
+      categoryId,
+      emergency,
+      sort,
+    }),
   ]);
 
-  const hasFilters = city !== "" || categoryId !== undefined;
+  const hasFilters = city !== "" || categoryId !== undefined || emergency;
 
   // Sorted by the translated name, so lists are alphabetical in the
   // visitor's language.
@@ -56,13 +65,16 @@ export default async function HomePage({
   // Builds a link to this page with the current search, changing only
   // what's in `changes` (e.g. a trade tile changes just the category).
   function hrefWith(
-    changes: Partial<Record<"city" | "category" | "sort" | "view", string>>,
+    changes: Partial<
+      Record<"city" | "category" | "sort" | "view" | "emergency", string>
+    >,
   ) {
     const values = {
       city,
       category: categoryId ? String(categoryId) : "",
       sort: sort === "name" ? "" : sort,
       view: view === "list" ? "" : view,
+      emergency: emergency ? "1" : "",
       ...changes,
     };
     // Empty values are left out, to keep the URL short.
@@ -145,6 +157,7 @@ export default async function HomePage({
             <select name="sort" defaultValue={sort} className="input">
               <option value="name">{dict.home.sortName}</option>
               <option value="rating">{dict.home.sortRating}</option>
+              <option value="distance">{dict.home.sortDistance}</option>
             </select>
           </label>
 
@@ -154,6 +167,17 @@ export default async function HomePage({
           <button type="submit" className="btn btn-primary">
             {dict.home.search}
           </button>
+
+          <label className="flex items-center gap-2 text-sm sm:col-span-full">
+            <input
+              type="checkbox"
+              name="emergency"
+              value="1"
+              defaultChecked={emergency}
+              className="accent-accent"
+            />
+            {dict.home.emergencyOnly}
+          </label>
         </Form>
 
         {/* Trade tiles: one click searches that trade */}
@@ -258,7 +282,14 @@ export default async function HomePage({
                 </h2>
                 <p className="text-sm text-muted">
                   {company.city} ({company.province})
+                  {company.distanceKm !== null &&
+                    ` · ${format(dict.home.distanceAway, { km: company.distanceKm })}`}
                 </p>
+                {company.emergencyService && (
+                  <p className="mt-1 text-xs font-semibold text-red-700 dark:text-red-400">
+                    {dict.home.emergencyBadge}
+                  </p>
+                )}
                 {company.averageRating !== null && (
                   <p className="mt-1 flex items-center gap-1 text-sm">
                     <Stars

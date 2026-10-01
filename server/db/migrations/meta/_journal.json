@@ -36,6 +36,13 @@
       "when": 1790848669000,
       "tag": "0004_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790849445204,
+      "tag": "0005_service_area",
+      "breakpoints": true
     }
   ]
 }
