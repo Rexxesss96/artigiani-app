@@ -2,7 +2,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
 import { db } from "@/server/db";
 import { companies, quoteRequests } from "@/server/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const quoteRequestsRouter = router({
@@ -78,6 +78,23 @@ export const quoteRequestsRouter = router({
         },
       },
     });
+  }),
+
+  // How many requests are waiting for an answer from my company
+  // (the badge in the navbar). 0 if the user has no company.
+
+  pendingCount: protectedProcedure.query(async ({ ctx }) => {
+    const [row] = await db
+      .select({ value: count() })
+      .from(quoteRequests)
+      .innerJoin(companies, eq(companies.id, quoteRequests.companyId))
+      .where(
+        and(
+          eq(companies.userId, ctx.session.user.id),
+          eq(quoteRequests.status, "pending"),
+        ),
+      );
+    return row.value;
   }),
 
   // Requests RECEIVED by the logged-in user's company, newest first.

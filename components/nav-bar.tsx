@@ -8,6 +8,7 @@ import { useI18n } from "@/components/i18n-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { format } from "@/lib/i18n/dictionaries";
 import { APP_NAME } from "@/lib/brand";
+import { trpc } from "@/lib/trpc";
 
 export function NavBar() {
   const router = useRouter();
@@ -15,6 +16,11 @@ export function NavBar() {
   const queryClient = useQueryClient();
   const { data: session, isPending } = useSession();
   const { dict } = useI18n();
+  // Requests waiting for an answer from my company (0 for customers).
+  const { data: pendingCount } = trpc.quoteRequests.pendingCount.useQuery(
+    undefined,
+    { enabled: !!session },
+  );
 
   async function handleLogout() {
     await authClient.signOut();
@@ -23,9 +29,9 @@ export function NavBar() {
     router.refresh();
   }
 
-  // Highlights the link of the page we're on.
+  // Highlights the link of the section we're in (/company/... too).
   function navLinkClass(href: string) {
-    const active = pathname === href;
+    const active = pathname === href || pathname.startsWith(`${href}/`);
     return `rounded-lg px-3 py-1.5 transition ${
       active ? "bg-accent-soft text-accent-soft-foreground" : "hover:bg-border"
     }`;
@@ -63,8 +69,16 @@ export function NavBar() {
               <Link href="/requests" className={navLinkClass("/requests")}>
                 {dict.nav.myRequests}
               </Link>
-              <Link href="/company" className={navLinkClass("/company")}>
+              <Link
+                href="/company"
+                className={`${navLinkClass("/company")} flex items-center gap-1.5`}
+              >
                 {dict.nav.myCompany}
+                {!!pendingCount && (
+                  <span className="rounded-full bg-accent px-1.5 text-xs text-accent-foreground">
+                    {pendingCount}
+                  </span>
+                )}
               </Link>
               <span className="hidden px-2 text-muted sm:inline">
                 {format(dict.nav.hi, { name: session.user.firstName })}
