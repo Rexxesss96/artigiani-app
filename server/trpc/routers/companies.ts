@@ -11,7 +11,8 @@ import {
 } from "@/server/db/schema";
 import { and, asc, avg, count, eq, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { geocodeAddress } from "@/server/geocode";
+import { geocodeAddress, geocodeCity } from "@/server/geocode";
+import { distanceKm } from "@/lib/geo";
 import { deleteImage } from "@/server/storage";
 
 // Fields a company can fill in, shared by `create` and `update`.
@@ -26,6 +27,8 @@ const companyFields = {
   phone: z.string().trim().max(20).optional(),
   description: z.string().trim().max(2000).optional(),
   categoryIds: z.array(z.number().int().positive()).min(1),
+  emergencyService: z.boolean().default(false),
+  serviceRadiusKm: z.number().int().min(1).max(200).default(20),
 };
 
 export const companiesRouter = router({
@@ -272,17 +275,23 @@ export const companiesRouter = router({
       z.object({
         city: z.string().trim().max(60).optional(),
         categoryId: z.number().int().positive().optional(),
-        sort: z.enum(["name", "rating"]).default("name"),
+        // Only companies offering urgent call-outs ("pronto intervento").
+        emergency: z.boolean().default(false),
+        sort: z.enum(["name", "rating", "distance"]).default("name"),
       }),
     )
     .query(async ({ input }) => {
+      // Where is the city the customer typed? (null if we can't tell)
+      const place = input.city ? await geocodeCity(input.city) : null;
+
       // Each filter becomes one SQL condition; `and()` skips the
       // undefined ones, so a missing filter simply doesn't apply.
       const conditions = [
+        // Without coordinates for the city we can only match its name.
         // ilike = case-insensitive LIKE: "rom" matches "Roma" and "ROMA".
         // "%" and "_" are wildcards in LIKE, so we escape them (and "\")
         // to search for them as plain characters.
-        input.city
+        input.city && !place
           ? ilike(companies.city, `%${input.city.replace(/[\\%_]/g, "\\$&")}%`)
           : undefined,
 
@@ -297,12 +306,13 @@ export const companiesRouter = router({
                 .where(eq(companiesCategories.categoryId, input.categoryId)),
             )
           : undefined,
+
+        input.emergency ? eq(companies.emergencyService, true) : undefined,
       ];
 
       const results = await db.query.companies.findMany({
         where: and(...conditions),
         orderBy: asc(companies.businessName),
-        limit: 50,
         columns: {
           id: true,
           businessName: true,
@@ -312,6 +322,8 @@ export const companiesRouter = router({
           logoFile: true,
           latitude: true,
           longitude: true,
+          emergencyService: true,
+          serviceRadiusKm: true,
         },
         with: {
           categories: {
@@ -322,26 +334,55 @@ export const companiesRouter = router({
         },
       });
 
-      const withRatings = results.map(({ reviews, ...company }) => ({
-        ...company,
-        reviewCount: reviews.length,
-        averageRating:
-          reviews.length === 0
-            ? null
-            : reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length,
-      }));
+      const enriched = results.map(({ reviews, ...company }) => {
+        const latitude = Number(company.latitude);
+        const longitude = Number(company.longitude);
+        const hasPosition =
+          company.latitude !== null && company.longitude !== null;
+        return {
+          ...company,
+          reviewCount: reviews.length,
+          averageRating:
+            reviews.length === 0
+              ? null
+              : reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length,
+          // How far the company is from the searched city (km), if known.
+          distanceKm:
+            place && hasPosition
+              ? Math.round(distanceKm(place, { latitude, longitude }))
+              : null,
+        };
+      });
 
-      // The database already sorts by name. For "rating" we re-sort here,
-      // because the average is computed in JavaScript: best first, then
-      // more reviews first, companies without reviews at the end.
+      // With coordinates for the city: a company is a match if it's based
+      // there OR the city is within the area it serves.
+      const searched = input.city?.toLowerCase() ?? "";
+      const matching = place
+        ? enriched.filter(
+            (company) =>
+              company.city.toLowerCase().includes(searched) ||
+              (company.distanceKm !== null &&
+                company.distanceKm <= company.serviceRadiusKm),
+          )
+        : enriched;
+
+      // The database already sorts by name. The other orders use values
+      // computed here in JavaScript, so we sort again.
       if (input.sort === "rating") {
-        withRatings.sort(
+        // Best first, then more reviews first, no reviews at the end.
+        matching.sort(
           (a, b) =>
             (b.averageRating ?? -1) - (a.averageRating ?? -1) ||
             b.reviewCount - a.reviewCount,
         );
+      } else if (input.sort === "distance") {
+        // Closest first, unknown distance at the end.
+        matching.sort(
+          (a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity),
+        );
       }
-      return withRatings;
+
+      return matching.slice(0, 50);
     }),
 
   // Returns a company by id with its linked categories (public query).
@@ -363,6 +404,8 @@ export const companiesRouter = router({
           latitude: true,
           longitude: true,
           logoFile: true,
+          emergencyService: true,
+          serviceRadiusKm: true,
         },
         with: {
           categories: {

@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useDeferredValue, useState } from "react";
+import { Suspense, useState } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
@@ -99,11 +100,15 @@ function NewJobForm() {
     categoryInput ?? presetCompany?.categories[0]?.categoryId ?? undefined;
   const city = cityInput ?? presetCompany?.city ?? "";
 
-  // useDeferredValue: while the user is typing the city, React keeps
-  // showing the old results and searches with the latest text when idle.
-  const searchCity = useDeferredValue(city.trim());
+  // Search only when the user stops typing the city for half a second.
+  // Urgent jobs: closest companies first; otherwise best rated first.
+  const searchCity = useDebouncedValue(city.trim());
   const { data: suggestions, isFetching } = trpc.companies.search.useQuery(
-    { city: searchCity, categoryId, sort: "rating" },
+    {
+      city: searchCity,
+      categoryId,
+      sort: urgency === "urgent" ? "distance" : "rating",
+    },
     { enabled: !!categoryId && searchCity.length >= 2 },
   );
 
@@ -170,6 +175,8 @@ function NewJobForm() {
             logoFile: presetCompany.logoFile,
             averageRating: null,
             reviewCount: 0,
+            emergencyService: presetCompany.emergencyService,
+            distanceKm: null,
           },
         ]
       : []),
@@ -391,7 +398,14 @@ function NewJobForm() {
                       </span>
                       <span className="block text-xs text-muted">
                         {company.city} ({company.province})
+                        {company.distanceKm !== null &&
+                          ` · ${format(dict.home.distanceAway, { km: company.distanceKm })}`}
                       </span>
+                      {company.emergencyService && (
+                        <span className="block text-xs font-semibold text-red-700 dark:text-red-400">
+                          {dict.home.emergencyBadge}
+                        </span>
+                      )}
                       {company.averageRating !== null && (
                         <span className="flex items-center gap-1 text-xs">
                           <Stars

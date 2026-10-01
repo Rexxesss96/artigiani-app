@@ -38,6 +38,8 @@ type DemoCompany = {
     description: string;
     latitude: string;
     longitude: string;
+    emergencyService: boolean;
+    serviceRadiusKm: number;
   };
   categorySlugs: string[];
 };
@@ -70,6 +72,8 @@ const COMPANIES: DemoCompany[] = [
         "Impianti idraulici ed elettrici per case e uffici. Pronto intervento in giornata su Varese e provincia.",
       latitude: "45.8183",
       longitude: "8.8258",
+      emergencyService: true,
+      serviceRadiusKm: 25,
     },
     categorySlugs: ["plumber", "electrician"],
   },
@@ -91,6 +95,8 @@ const COMPANIES: DemoCompany[] = [
         "Falegnameria artigianale dal 1978: mobili su misura, porte, scale e restauro.",
       latitude: "45.8081",
       longitude: "9.0852",
+      emergencyService: false,
+      serviceRadiusKm: 30,
     },
     categorySlugs: ["carpenter"],
   },
@@ -112,6 +118,8 @@ const COMPANIES: DemoCompany[] = [
         "Ristrutturazioni complete, opere murarie e posa di pavimenti e rivestimenti.",
       latitude: "45.4960",
       longitude: "9.2210",
+      emergencyService: false,
+      serviceRadiusKm: 40,
     },
     categorySlugs: ["mason", "tiler"],
   },
@@ -133,6 +141,8 @@ const COMPANIES: DemoCompany[] = [
         "Tinteggiature interne ed esterne, decorazioni e trattamenti antimuffa.",
       latitude: "41.8830",
       longitude: "12.5160",
+      emergencyService: false,
+      serviceRadiusKm: 25,
     },
     categorySlugs: ["house-painter", "painter"],
   },
@@ -154,6 +164,8 @@ const COMPANIES: DemoCompany[] = [
         "Finestre, porte blindate e serrature. Sopralluogo e preventivo gratuiti.",
       latitude: "45.0770",
       longitude: "7.6490",
+      emergencyService: false,
+      serviceRadiusKm: 20,
     },
     categorySlugs: ["window-installer", "locksmith"],
   },
@@ -175,6 +187,8 @@ const COMPANIES: DemoCompany[] = [
         "Progettazione e manutenzione di giardini, potature e prati.",
       latitude: "45.8150",
       longitude: "8.8330",
+      emergencyService: false,
+      serviceRadiusKm: 15,
     },
     categorySlugs: ["gardener"],
   },
@@ -196,6 +210,8 @@ const COMPANIES: DemoCompany[] = [
         "Pronto intervento idraulico 7 giorni su 7: perdite, scarichi otturati, caldaie.",
       latitude: "45.6596",
       longitude: "8.7915",
+      emergencyService: true,
+      serviceRadiusKm: 30,
     },
     categorySlugs: ["plumber"],
   },
@@ -217,6 +233,8 @@ const COMPANIES: DemoCompany[] = [
         "Ristrutturazioni chiavi in mano: bagni, cucine e appartamenti completi, con direzione lavori.",
       latitude: "45.4605",
       longitude: "9.1840",
+      emergencyService: false,
+      serviceRadiusKm: 50,
     },
     categorySlugs: ["mason", "tiler"],
   },

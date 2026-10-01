@@ -158,6 +158,10 @@ export const companies = pgTable(
     postalCode: varchar("postal_code", { length: 5 }).notNull(),
     phone: varchar("phone", { length: 20 }),
     description: text("description"),
+    // Does the company handle urgent call-outs ("pronto intervento")?
+    emergencyService: boolean("emergency_service").notNull().default(false),
+    // How far from its address the company is willing to work, in km.
+    serviceRadiusKm: smallint("service_radius_km").notNull().default(20),
     // File name of the logo inside the uploads/ folder (see server/storage.ts).
     logoFile: varchar("logo_file", { length: 100 }),
     latitude: varchar("latitude", { length: 20 }),

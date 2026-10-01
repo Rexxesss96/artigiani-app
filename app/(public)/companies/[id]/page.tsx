@@ -101,6 +101,11 @@ export default async function CompanyProfilePage({
                 <p className="text-muted">
                   {company.city} ({company.province})
                 </p>
+                {company.emergencyService && (
+                  <p className="mt-1 text-sm font-semibold text-red-700 dark:text-red-400">
+                    {dict.home.emergencyBadge}
+                  </p>
+                )}
                 {average !== null && (
                   <p className="mt-1 flex items-center gap-1 text-sm">
                     <Stars
@@ -227,6 +232,12 @@ export default async function CompanyProfilePage({
               {company.address}
               <br />
               {company.postalCode} {company.city} ({company.province})
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              {format(dict.profile.serviceArea, {
+                km: company.serviceRadiusKm,
+                city: company.city,
+              })}
             </p>
             {company.phone && (
               <p className="mt-2 text-sm">

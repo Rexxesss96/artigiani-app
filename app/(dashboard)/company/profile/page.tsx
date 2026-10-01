@@ -44,6 +44,8 @@ export default function CompanyProfileEditPage() {
                 phone: myCompany.phone ?? undefined,
                 description: myCompany.description ?? undefined,
                 categoryIds: myCompany.categories.map((c) => c.categoryId),
+                emergencyService: myCompany.emergencyService,
+                serviceRadiusKm: myCompany.serviceRadiusKm,
               }}
               // The server ignores fields it doesn't expect (like the
               // empty vatNumber): zod drops unknown keys.
