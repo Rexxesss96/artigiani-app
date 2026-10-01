@@ -106,16 +106,33 @@ export const quoteRequestsRouter = router({
     });
   }),
 
-  // The company accepts or rejects a request it received.
+  // The company answers a request it received: it accepts it with a
+  // quote (amount + optional message) or rejects it (optional message).
 
   updateStatus: protectedProcedure
     .input(
       z.object({
         id: z.number().int().positive(),
         status: z.enum(["accepted", "rejected"]),
+        // Up to 1 million euros, in cents.
+        quoteAmountCents: z
+          .number()
+          .int()
+          .positive()
+          .max(100_000_000)
+          .optional(),
+        responseMessage: z.string().trim().max(2000).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Accepting means sending a price: the amount is required.
+      if (input.status === "accepted" && input.quoteAmountCents === undefined) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: ctx.dict.errors.amountRequired,
+        });
+      }
+
       const myCompany = await db.query.companies.findFirst({
         where: eq(companies.userId, ctx.session.user.id),
         columns: { id: true },
@@ -130,7 +147,13 @@ export const quoteRequestsRouter = router({
       // If any of them is false, nothing is updated.
       const [updated] = await db
         .update(quoteRequests)
-        .set({ status: input.status })
+        .set({
+          status: input.status,
+          quoteAmountCents:
+            input.status === "accepted" ? input.quoteAmountCents : null,
+          responseMessage: input.responseMessage || null,
+          respondedAt: new Date(),
+        })
         .where(
           and(
             eq(quoteRequests.id, input.id),

@@ -4,6 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { StatusBadge } from "@/components/status-badge";
 import { useI18n } from "@/components/i18n-provider";
 import { dateLocales } from "@/lib/i18n/config";
+import { QuoteResponse } from "@/components/quote-response";
+import { RespondForm } from "@/components/respond-form";
 
 // Company dashboard section: quote requests received by my company,
 // with Accept / Reject buttons on the pending ones.
@@ -57,27 +59,14 @@ export function ReceivedRequests() {
               {request.message}
             </p>
 
+            <QuoteResponse request={request} viewer="company" />
+
             {request.status === "pending" && (
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() =>
-                    updateStatus.mutate({ id: request.id, status: "accepted" })
-                  }
-                  disabled={updateStatus.isPending}
-                  className="btn bg-green-700 text-white hover:bg-green-800"
-                >
-                  {dict.dashboard.accept}
-                </button>
-                <button
-                  onClick={() =>
-                    updateStatus.mutate({ id: request.id, status: "rejected" })
-                  }
-                  disabled={updateStatus.isPending}
-                  className="btn btn-secondary text-red-700 dark:text-red-400"
-                >
-                  {dict.dashboard.reject}
-                </button>
-              </div>
+              <RespondForm
+                requestId={request.id}
+                isPending={updateStatus.isPending}
+                onRespond={(response) => updateStatus.mutate(response)}
+              />
             )}
           </li>
         ))}

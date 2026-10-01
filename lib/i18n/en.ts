@@ -67,6 +67,11 @@ export const en = {
     empty: "You haven't sent any requests yet.",
     findCompany: "Find a company",
   },
+  response: {
+    quote: "Quote: {amount}",
+    companyReply: "Reply from the company",
+    yourReply: "Your reply",
+  },
   status: {
     pending: "pending",
     accepted: "accepted",
@@ -83,6 +88,12 @@ export const en = {
     noRequests: "No quote requests yet.",
     accept: "Accept",
     reject: "Reject",
+    amountLabel: "Quote amount (€)",
+    amountPlaceholder: "e.g. 150 or 150.50",
+    invalidAmount: "Enter a valid amount, e.g. 150 or 150.50.",
+    responsePlaceholder:
+      "Message to the customer (optional): timing, what's included, details...",
+    acceptWithQuote: "Send quote and accept",
     registerTitle: "Register your company",
     businessName: "Business name",
     vatNumber: "VAT number (11 digits)",
@@ -140,6 +151,7 @@ export const en = {
     pendingRequestExists:
       "You already have a pending request with this company. Wait for its answer.",
     requestNotFound: "Request not found or already answered.",
+    amountRequired: "Enter the quote amount to accept the request.",
     companyAlreadyExists: "You already have a registered company.",
   },
   // Trade names by category slug (the database stores them in English).

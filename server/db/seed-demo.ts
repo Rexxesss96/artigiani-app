@@ -236,6 +236,10 @@ async function main() {
       message:
         "Perdita dal rubinetto della cucina, servirebbe un intervento entro la settimana.",
       status: "accepted",
+      quoteAmountCents: 9000,
+      responseMessage:
+        "Possiamo passare giovedì mattina. Il prezzo include uscita, manodopera e guarnizioni.",
+      respondedAt: new Date(),
     },
     {
       userId: giuliaId,
@@ -249,18 +253,26 @@ async function main() {
       companyId: russo,
       message: "Rifacimento completo del bagno, circa 6 mq.",
       status: "rejected",
+      responseMessage: "Purtroppo siamo pieni fino a fine anno. Ci scusiamo!",
+      respondedAt: new Date(),
     },
     {
       userId: lucaId,
       companyId: ferrari,
       message: "Sostituzione del quadro elettrico in un appartamento di 80 mq.",
       status: "accepted",
+      quoteAmountCents: 85000,
+      responseMessage:
+        "Quadro nuovo a norma con differenziali, certificazione inclusa. Tempo: 1 giorno.",
+      respondedAt: new Date(),
     },
     {
       userId: lucaId,
       companyId: greco,
       message: "Tinteggiatura di soggiorno e due camere.",
       status: "accepted",
+      quoteAmountCents: 120050,
+      respondedAt: new Date(),
     },
     {
       userId: lucaId,
