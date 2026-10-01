@@ -84,7 +84,11 @@ export default function CompanyOverviewPage() {
   return (
     <main className="flex flex-col gap-6">
       <section className="card flex flex-wrap items-center gap-4">
-        <CompanyAvatar name={myCompany.businessName} size="lg" />
+        <CompanyAvatar
+          name={myCompany.businessName}
+          logoFile={myCompany.logoFile}
+          size="lg"
+        />
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold tracking-tight">
             {myCompany.businessName}

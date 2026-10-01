@@ -163,7 +163,10 @@ export default async function HomePage({
               href={`/companies/${company.id}`}
               className="card flex h-full gap-4 transition hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md"
             >
-              <CompanyAvatar name={company.businessName} />
+              <CompanyAvatar
+                name={company.businessName}
+                logoFile={company.logoFile}
+              />
               <div className="min-w-0 flex-1">
                 <h2 className="truncate font-semibold">
                   {company.businessName}

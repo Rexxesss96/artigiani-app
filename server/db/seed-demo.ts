@@ -1,14 +1,16 @@
 import "dotenv/config";
-import { eq, like } from "drizzle-orm";
+import { eq, inArray, like } from "drizzle-orm";
 import { db } from "./index";
 import {
   companies,
   companiesCategories,
+  companyPhotos,
   quoteRequests,
   reviews,
   user,
 } from "./schema";
 import { auth } from "@/lib/auth";
+import { deleteImage } from "@/server/storage";
 
 // Demo data for trying the app locally: `npm run db:seed:demo`.
 //
@@ -195,6 +197,30 @@ async function createUser(data: {
 
 async function main() {
   console.log("Removing old demo data...");
+  // Image files aren't in the database: delete the ones of demo
+  // companies by hand, before the rows that point to them disappear.
+  const demoCompanies = await db
+    .select({ id: companies.id, logoFile: companies.logoFile })
+    .from(companies)
+    .innerJoin(user, eq(user.id, companies.userId))
+    .where(like(user.email, `%${DEMO_DOMAIN}`));
+  if (demoCompanies.length > 0) {
+    const photos = await db
+      .select({ fileName: companyPhotos.fileName })
+      .from(companyPhotos)
+      .where(
+        inArray(
+          companyPhotos.companyId,
+          demoCompanies.map((c) => c.id),
+        ),
+      );
+    await Promise.all(
+      [
+        ...demoCompanies.map((c) => c.logoFile),
+        ...photos.map((p) => p.fileName),
+      ].map(deleteImage),
+    );
+  }
   await db.delete(user).where(like(user.email, `%${DEMO_DOMAIN}`));
 
   const allCategories = await db.query.categories.findMany();

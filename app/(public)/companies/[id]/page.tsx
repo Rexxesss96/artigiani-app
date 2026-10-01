@@ -9,6 +9,8 @@ import { ReviewForm } from "@/components/review-form";
 import { Stars } from "@/components/stars";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { CompanyMap } from "@/components/company-map";
+import Image from "next/image";
+import { uploadUrl } from "@/lib/uploads";
 import { getDictionary } from "@/lib/i18n/server";
 import { categoryName, format } from "@/lib/i18n/dictionaries";
 import { dateLocales } from "@/lib/i18n/config";
@@ -88,7 +90,11 @@ export default async function CompanyProfilePage({
         <div className="flex flex-col gap-6">
           <section className="card">
             <div className="flex items-start gap-4">
-              <CompanyAvatar name={company.businessName} size="lg" />
+              <CompanyAvatar
+                name={company.businessName}
+                logoFile={company.logoFile}
+                size="lg"
+              />
               <div className="min-w-0">
                 <h1 className="text-2xl font-bold tracking-tight">
                   {company.businessName}
@@ -136,6 +142,35 @@ export default async function CompanyProfilePage({
               </>
             )}
           </section>
+
+          {company.photos.length > 0 && (
+            <section className="card">
+              <h2 className="text-lg font-semibold">{dict.profile.gallery}</h2>
+              <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {company.photos.map((photo) => (
+                  <li key={photo.id}>
+                    {/* A link to the full-size image, opened in a new tab */}
+                    <a
+                      href={uploadUrl(photo.fileName)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative block aspect-square overflow-hidden rounded-xl border border-border"
+                    >
+                      <Image
+                        src={uploadUrl(photo.fileName)}
+                        alt={format(dict.profile.photoAlt, {
+                          name: company.businessName,
+                        })}
+                        fill
+                        sizes="(min-width: 640px) 240px, 50vw"
+                        className="object-cover transition hover:scale-105"
+                      />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section className="card">
             <h2 className="text-lg font-semibold">{dict.profile.reviews}</h2>
