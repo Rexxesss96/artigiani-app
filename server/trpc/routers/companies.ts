@@ -193,6 +193,8 @@ export const companiesRouter = router({
 
     return {
       pending: byStatus.pending ?? 0,
+      quoted: byStatus.quoted ?? 0,
+      // "accepted" = the customer chose us: a job won
       accepted: byStatus.accepted ?? 0,
       rejected: byStatus.rejected ?? 0,
       reviewCount: reviewStats.value,

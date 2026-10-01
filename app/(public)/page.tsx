@@ -101,6 +101,9 @@ export default async function HomePage({
               {dict.home.title}
             </h1>
             <p className="mt-3 text-muted">{dict.home.subtitle}</p>
+            <Link href="/jobs/new" className="btn btn-primary mt-5">
+              + {dict.jobs.postJob}
+            </Link>
           </div>
           {/* Decorative drawing, only on wider screens */}
           <HeroIllustration className="hidden w-full text-muted/50 md:block" />

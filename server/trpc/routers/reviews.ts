@@ -5,23 +5,28 @@ import { quoteRequests, reviews } from "@/server/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
-// Who can leave a review? Only a customer whose quote request was
-// ACCEPTED by that company (so they actually worked together), and
-// only once per company. Used both to show/hide the form and, again,
+// Who can leave a review? Only a customer who CHOSE that company for a
+// job and marked the job as completed (so they actually worked
+// together), and only once per company. Used both to show/hide the form and, again,
 // inside `create` — the server never trusts the UI.
 // `reason` is a dictionary key (profile.*), so each page shows it in
 // the visitor's language.
 async function getReviewEligibility(userId: string, companyId: number) {
-  const acceptedRequest = await db.query.quoteRequests.findFirst({
+  const hiredRequests = await db.query.quoteRequests.findMany({
     where: and(
       eq(quoteRequests.userId, userId),
       eq(quoteRequests.companyId, companyId),
       eq(quoteRequests.status, "accepted"),
     ),
     columns: { id: true },
+    with: { job: { columns: { status: true } } },
   });
+  // Old requests made before jobs existed have no job: they count too.
+  const workedTogether = hiredRequests.some(
+    (r) => !r.job || r.job.status === "completed",
+  );
 
-  if (!acceptedRequest) {
+  if (!workedTogether) {
     return { canReview: false, reason: "reviewNeedsAccepted" } as const;
   }
 

@@ -56,6 +56,12 @@ Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/reg
 - ✅ Pagina account: dati personali, cambio password, eliminazione account; il cliente può annullare una richiesta in attesa
 - ✅ Home: vista "Mappa" con tutte le imprese (Leaflet + OpenStreetMap) e ordinamento per voto
 
+### 🔶 Milestone 9 — Lavori piccoli e grandi
+- ✅ **Lavori con più imprese**: il cliente pubblica un lavoro (mestiere, città, descrizione, foto, urgenza, dimensione, budget) e lo invia fino a 5 imprese; confronta i preventivi, sceglie, segna come completato; la recensione si sblocca solo a lavoro completato
+- ⬜ Pronto intervento e zona servita (km) delle imprese, filtro "pronto intervento"
+- ⬜ Chat tra cliente e impresa dentro ogni richiesta, con proposta di sopralluogo (data e ora)
+- ⬜ Avvisi nell'app anche per il cliente (nuovi preventivi, nuovi messaggi)
+
 ### Idee per il futuro
 - Deploy online (rimandato: l'app resta in locale). Servirà anche spostare le immagini su uno storage cloud: basta cambiare `server/storage.ts`
 - Notifiche email quando arriva o cambia una richiesta di preventivo

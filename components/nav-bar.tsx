@@ -66,8 +66,11 @@ export function NavBar() {
         <nav className="flex flex-wrap items-center gap-1 text-sm">
           {isPending ? null : session ? (
             <>
-              <Link href="/requests" className={navLinkClass("/requests")}>
-                {dict.nav.myRequests}
+              <Link href="/jobs/new" className="btn btn-primary py-1.5">
+                + {dict.jobs.postJob}
+              </Link>
+              <Link href="/jobs" className={navLinkClass("/jobs")}>
+                {dict.jobs.navMyJobs}
               </Link>
               <Link
                 href="/company"

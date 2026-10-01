@@ -5,11 +5,11 @@ import { useI18n } from "@/components/i18n-provider";
 import { parseMoneyToCents } from "@/lib/money";
 
 // Inside a pending request in the company dashboard: the company writes
-// an amount and a message, then accepts (sending the quote) or rejects.
+// an amount and a message and sends its quote, or declines the job.
 
-type Response = {
+export type Response = {
   id: number;
-  status: "accepted" | "rejected";
+  action: "quote" | "decline";
   quoteAmountCents?: number;
   responseMessage?: string;
 };
@@ -29,7 +29,7 @@ export function RespondForm({
   const [message, setMessage] = useState("");
   const [amountError, setAmountError] = useState(false);
 
-  function accept() {
+  function sendQuote() {
     const cents = parseMoneyToCents(amount);
     if (cents === null) {
       setAmountError(true);
@@ -38,16 +38,16 @@ export function RespondForm({
     setAmountError(false);
     onRespond({
       id: requestId,
-      status: "accepted",
+      action: "quote",
       quoteAmountCents: cents,
       responseMessage: message || undefined,
     });
   }
 
-  function reject() {
+  function decline() {
     onRespond({
       id: requestId,
-      status: "rejected",
+      action: "decline",
       responseMessage: message || undefined,
     });
   }
@@ -78,18 +78,18 @@ export function RespondForm({
 
       <div className="flex flex-wrap gap-2">
         <button
-          onClick={accept}
+          onClick={sendQuote}
           disabled={isPending}
           className="btn bg-green-700 text-white hover:bg-green-800"
         >
-          {d.acceptWithQuote}
+          {d.sendQuote}
         </button>
         <button
-          onClick={reject}
+          onClick={decline}
           disabled={isPending}
           className="btn btn-secondary text-red-700 dark:text-red-400"
         >
-          {d.reject}
+          {d.decline}
         </button>
       </div>
     </div>

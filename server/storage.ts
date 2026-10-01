@@ -10,6 +10,7 @@ const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
 export const MAX_IMAGE_BYTES = 3 * 1024 * 1024; // 3 MB
 export const MAX_PHOTOS = 8;
+export const MAX_JOB_PHOTOS = 4;
 
 type ImageType = { ext: "jpg" | "png" | "webp"; contentType: string };
 
