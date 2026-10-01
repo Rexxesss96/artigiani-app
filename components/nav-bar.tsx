@@ -80,9 +80,13 @@ export function NavBar() {
                   </span>
                 )}
               </Link>
-              <span className="hidden px-2 text-muted sm:inline">
+              <Link
+                href="/account"
+                title={dict.nav.account}
+                className={`${navLinkClass("/account")} text-muted`}
+              >
                 {format(dict.nav.hi, { name: session.user.firstName })}
-              </span>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="cursor-pointer rounded-lg px-3 py-1.5 transition hover:bg-border"

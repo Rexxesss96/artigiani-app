@@ -9,6 +9,8 @@ export function authErrorMessage(code: string, dict: Dictionary) {
     case "USER_ALREADY_EXISTS":
     case "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL":
       return dict.auth.userExists;
+    case "INVALID_PASSWORD":
+      return dict.auth.wrongPassword;
     case "PASSWORD_TOO_SHORT":
       return dict.auth.passwordTooShort;
     default:

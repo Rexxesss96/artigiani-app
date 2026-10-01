@@ -23,6 +23,7 @@ export const requestStatusEnum = pgEnum("request_status", [
   "pending",
   "accepted",
   "rejected",
+  "cancelled", // withdrawn by the customer while still pending
 ]);
 
 /* 
