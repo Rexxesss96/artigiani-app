@@ -17,7 +17,7 @@ export const en = {
   },
   common: {
     loading: "Loading...",
-    footer: "Artigiani Directory · Find the right tradesperson near you",
+    footer: "{app} · Find the right tradesperson near you",
   },
   home: {
     title: "Find local companies and tradespeople",

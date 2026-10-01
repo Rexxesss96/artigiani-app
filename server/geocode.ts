@@ -24,7 +24,7 @@ export async function geocodeAddress(
 
   try {
     const response = await fetch(url, {
-      headers: { "User-Agent": "ArtigianiDirectory/0.1 (student project)" },
+      headers: { "User-Agent": "TrovArtigiano/0.1 (student project)" },
       // Don't keep the user waiting if the service is slow.
       signal: AbortSignal.timeout(5000),
     });
