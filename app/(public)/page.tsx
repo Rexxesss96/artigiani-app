@@ -6,6 +6,8 @@ import { getDictionary } from "@/lib/i18n/server";
 import { categoryName, format } from "@/lib/i18n/dictionaries";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { Stars } from "@/components/stars";
+import { HeroIllustration } from "@/components/hero-illustration";
+import { TradeIcon } from "@/components/trade-icon";
 
 // Public home page: search form + results list.
 // Server Component — the filters live in the URL (/?city=Roma&category=2),
@@ -41,13 +43,34 @@ export default async function HomePage({
 
   const hasFilters = city !== "" || categoryId !== undefined;
 
+  // Sorted by the translated name, so lists are alphabetical in the
+  // visitor's language.
+  const sortedCategories = categories.toSorted((a, b) =>
+    categoryName(dict, a).localeCompare(categoryName(dict, b)),
+  );
+
+  // Link of a trade tile: keeps the city typed in the search, if any.
+  function tradeHref(id: number) {
+    const query = new URLSearchParams({ category: String(id) });
+    if (city) {
+      query.set("city", city);
+    }
+    return `/?${query}`;
+  }
+
   return (
     <main className="container-page">
-      <section className="py-6 sm:py-10">
-        <h1 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
-          {dict.home.title}
-        </h1>
-        <p className="mt-3 max-w-2xl text-muted">{dict.home.subtitle}</p>
+      <section className="py-6 sm:py-8">
+        <div className="grid items-center gap-6 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px]">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              {dict.home.title}
+            </h1>
+            <p className="mt-3 text-muted">{dict.home.subtitle}</p>
+          </div>
+          {/* Decorative drawing, only on wider screens */}
+          <HeroIllustration className="hidden w-full text-muted/50 md:block" />
+        </div>
 
         {/* action="" = stay on this page, only the search params change */}
         <Form
@@ -72,17 +95,11 @@ export default async function HomePage({
               className="input"
             >
               <option value="">{dict.home.allTrades}</option>
-              {categories
-                // Sorted by the translated name, so the list is alphabetical
-                // in the visitor's language.
-                .toSorted((a, b) =>
-                  categoryName(dict, a).localeCompare(categoryName(dict, b)),
-                )
-                .map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {categoryName(dict, category)}
-                  </option>
-                ))}
+              {sortedCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {categoryName(dict, category)}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -90,6 +107,34 @@ export default async function HomePage({
             {dict.home.search}
           </button>
         </Form>
+
+        {/* Trade tiles: one click searches that trade */}
+        <ul className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {sortedCategories.map((category) => {
+            const active = category.id === categoryId;
+            return (
+              <li key={category.id}>
+                <Link
+                  href={tradeHref(category.id)}
+                  aria-current={active ? "true" : undefined}
+                  className={`flex h-full items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                    active
+                      ? "border-accent bg-accent-soft text-accent-soft-foreground"
+                      : "border-border bg-card hover:border-accent/50"
+                  }`}
+                >
+                  <TradeIcon
+                    slug={category.slug}
+                    className="size-5 shrink-0 text-accent"
+                  />
+                  <span className="truncate">
+                    {categoryName(dict, category)}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <div className="flex items-center justify-between gap-4">
