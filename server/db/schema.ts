@@ -192,6 +192,12 @@ export const quoteRequests = pgTable("quote_requests", {
   message: text("message").notNull(),
   status: requestStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  // The company's answer. Money is stored in CENTS as an integer
+  // (€ 150,50 -> 15050): decimal numbers in floating point can't
+  // represent every amount exactly, integers can.
+  quoteAmountCents: integer("quote_amount_cents"),
+  responseMessage: text("response_message"),
+  respondedAt: timestamp("responded_at"),
 });
 
 /* 

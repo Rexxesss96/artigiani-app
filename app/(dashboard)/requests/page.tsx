@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { StatusBadge } from "@/components/status-badge";
 import { useI18n } from "@/components/i18n-provider";
 import { dateLocales } from "@/lib/i18n/config";
+import { QuoteResponse } from "@/components/quote-response";
 
 // "My requests": the quote requests the logged-in user has sent.
 
@@ -78,6 +79,7 @@ export default function MyRequestsPage() {
             <p className="mt-3 whitespace-pre-line text-sm">
               {request.message}
             </p>
+            <QuoteResponse request={request} viewer="customer" />
           </li>
         ))}
       </ul>

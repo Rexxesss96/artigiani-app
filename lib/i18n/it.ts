@@ -69,6 +69,11 @@ export const it: Dictionary = {
     empty: "Non hai ancora inviato nessuna richiesta.",
     findCompany: "Cerca un'impresa",
   },
+  response: {
+    quote: "Preventivo: {amount}",
+    companyReply: "Risposta dell'impresa",
+    yourReply: "La tua risposta",
+  },
   status: {
     pending: "in attesa",
     accepted: "accettata",
@@ -85,6 +90,12 @@ export const it: Dictionary = {
     noRequests: "Nessuna richiesta di preventivo per ora.",
     accept: "Accetta",
     reject: "Rifiuta",
+    amountLabel: "Importo del preventivo (€)",
+    amountPlaceholder: "es. 150 oppure 150,50",
+    invalidAmount: "Inserisci un importo valido, es. 150 oppure 150,50.",
+    responsePlaceholder:
+      "Messaggio al cliente (facoltativo): tempi, cosa è incluso, dettagli...",
+    acceptWithQuote: "Invia preventivo e accetta",
     registerTitle: "Registra la tua impresa",
     businessName: "Ragione sociale",
     vatNumber: "Partita IVA (11 cifre)",
@@ -142,6 +153,8 @@ export const it: Dictionary = {
     pendingRequestExists:
       "Hai già una richiesta in attesa con questa impresa. Aspetta la sua risposta.",
     requestNotFound: "Richiesta non trovata o già gestita.",
+    amountRequired:
+      "Inserisci l'importo del preventivo per accettare la richiesta.",
     companyAlreadyExists: "Hai già un'impresa registrata.",
   },
   categories: {
