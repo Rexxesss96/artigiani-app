@@ -56,16 +56,15 @@ Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/reg
 - ✅ Pagina account: dati personali, cambio password, eliminazione account; il cliente può annullare una richiesta in attesa
 - ✅ Home: vista "Mappa" con tutte le imprese (Leaflet + OpenStreetMap) e ordinamento per voto
 
-### 🔶 Milestone 9 — Lavori piccoli e grandi
+### ✅ Milestone 9 — Lavori piccoli e grandi
 - ✅ **Lavori con più imprese**: il cliente pubblica un lavoro (mestiere, città, descrizione, foto, urgenza, dimensione, budget) e lo invia fino a 5 imprese; confronta i preventivi, sceglie, segna come completato; la recensione si sblocca solo a lavoro completato
 - ✅ Pronto intervento e zona servita (km) delle imprese: la ricerca per città trova anche chi ci arriva da fuori (distanza calcolata con le coordinate), filtro "pronto intervento", ordinamento per distanza; nei lavori urgenti le imprese più vicine vengono suggerite per prime
-- ⬜ Chat tra cliente e impresa dentro ogni richiesta, con proposta di sopralluogo (data e ora)
-- ⬜ Avvisi nell'app anche per il cliente (nuovi preventivi, nuovi messaggi)
+- ✅ Chat tra cliente e impresa dentro ogni richiesta, con proposta di sopralluogo (data e ora) che il cliente conferma o rifiuta
+- ✅ Avvisi nell'app: contatori nella navbar per il cliente (nuovi preventivi e messaggi) e per l'impresa (richieste in attesa e messaggi), etichette "Novità" e "Nuovo"
 
 ### Idee per il futuro
 - Deploy online (rimandato: l'app resta in locale). Servirà anche spostare le immagini su uno storage cloud: basta cambiare `server/storage.ts`
 - Notifiche email quando arriva o cambia una richiesta di preventivo
-- Messaggi tra cliente e impresa dentro la richiesta (una piccola chat)
 - Vincolo unico nel database "una recensione per cliente per impresa" (oggi è controllato solo nel codice)
 - Paginazione dei risultati di ricerca (oggi massimo 50)
 - Test automatici (unit test sui router tRPC, test end-to-end con Playwright)

@@ -8,6 +8,7 @@ import {
   jobPhotos,
   jobs,
   quoteRequests,
+  requestMessages,
   reviews,
   user,
 } from "./schema";
@@ -341,18 +342,21 @@ async function main() {
     }[],
   ) {
     const [created] = await db.insert(jobs).values(job).returning();
-    await db.insert(quoteRequests).values(
-      answers.map((answer) => ({
-        jobId: created.id,
-        userId: job.userId,
-        companyId: answer.companyId,
-        status: answer.status,
-        quoteAmountCents: answer.quoteAmountCents ?? null,
-        responseMessage: answer.responseMessage ?? null,
-        respondedAt: answer.status === "pending" ? null : job.createdAt,
-        createdAt: job.createdAt,
-      })),
-    );
+    return db
+      .insert(quoteRequests)
+      .values(
+        answers.map((answer) => ({
+          jobId: created.id,
+          userId: job.userId,
+          companyId: answer.companyId,
+          status: answer.status,
+          quoteAmountCents: answer.quoteAmountCents ?? null,
+          responseMessage: answer.responseMessage ?? null,
+          respondedAt: answer.status === "pending" ? null : job.createdAt,
+          createdAt: job.createdAt,
+        })),
+      )
+      .returning();
   }
 
   // ---------- Giulia ----------
@@ -388,8 +392,9 @@ async function main() {
     ],
   );
 
-  // Big job: a renovation, one company declined, one sent a quote.
-  await createJob(
+  // Big job: a renovation, one company declined, one sent a quote and
+  // proposed a site visit in the chat.
+  const bathroomRequests = await createJob(
     {
       userId: giuliaId,
       categoryId: categoryId("mason"),
@@ -542,6 +547,38 @@ async function main() {
       { companyId: express, status: "pending" },
     ],
   );
+
+  // A conversation about the bathroom: questions, a site visit proposal,
+  // and a last message Giulia hasn't read yet (badge in the navbar).
+  const edilRequest = bathroomRequests.find((r) => r.companyId === edil)!;
+  const edilOwnerId = (await db.query.companies.findFirst({
+    where: eq(companies.id, edil),
+    columns: { userId: true },
+  }))!.userId;
+  await db.insert(requestMessages).values([
+    {
+      requestId: edilRequest.id,
+      senderId: giuliaId,
+      body: "Buongiorno, nel preventivo è incluso anche lo smaltimento dei vecchi sanitari?",
+      readAt: daysAgo(4),
+      createdAt: daysAgo(4),
+    },
+    {
+      requestId: edilRequest.id,
+      senderId: edilOwnerId,
+      body: "Sì, smaltimento e trasporto in discarica sono inclusi.",
+      readAt: daysAgo(3),
+      createdAt: daysAgo(4),
+    },
+    {
+      requestId: edilRequest.id,
+      senderId: edilOwnerId,
+      body: "Per il preventivo definitivo ci serve vedere il bagno: le va bene questa data?",
+      visitAt: new Date(Date.now() + 3 * 86_400_000),
+      visitStatus: "proposed",
+      createdAt: daysAgo(1),
+    },
+  ]);
 
   await db.insert(reviews).values([
     {

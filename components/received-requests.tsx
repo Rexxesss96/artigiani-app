@@ -9,6 +9,7 @@ import { QuoteResponse } from "@/components/quote-response";
 import { RespondForm } from "@/components/respond-form";
 import { JobBadges } from "@/components/job-badges";
 import { uploadUrl } from "@/lib/uploads";
+import { RequestThread } from "@/components/request-thread";
 
 // Company dashboard: the jobs sent to my company. Each card shows the
 // job (what, where, how urgent, budget, photos) and, while pending,
@@ -37,7 +38,7 @@ export function ReceivedRequests({
     onSuccess: () =>
       Promise.all([
         utils.quoteRequests.listReceived.invalidate(),
-        utils.quoteRequests.pendingCount.invalidate(),
+        utils.notifications.invalidate(),
         utils.companies.stats.invalidate(),
       ]),
   });
@@ -124,6 +125,13 @@ export function ReceivedRequests({
             )}
 
             <QuoteResponse request={request} viewer="company" />
+
+            <RequestThread
+              requestId={request.id}
+              viewer="company"
+              closed={request.status === "cancelled"}
+              unread={request.unreadCount}
+            />
 
             {request.status === "pending" && (
               <RespondForm

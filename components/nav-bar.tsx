@@ -16,11 +16,12 @@ export function NavBar() {
   const queryClient = useQueryClient();
   const { data: session, isPending } = useSession();
   const { dict } = useI18n();
-  // Requests waiting for an answer from my company (0 for customers).
-  const { data: pendingCount } = trpc.quoteRequests.pendingCount.useQuery(
-    undefined,
-    { enabled: !!session },
-  );
+  // What's new for me (badges): new quotes and messages as a customer,
+  // pending requests and messages as a company. Re-checked every 30 s.
+  const { data: news } = trpc.notifications.summary.useQuery(undefined, {
+    enabled: !!session,
+    refetchInterval: 30_000,
+  });
 
   async function handleLogout() {
     await authClient.signOut();
@@ -69,17 +70,25 @@ export function NavBar() {
               <Link href="/jobs/new" className="btn btn-primary py-1.5">
                 + {dict.jobs.postJob}
               </Link>
-              <Link href="/jobs" className={navLinkClass("/jobs")}>
+              <Link
+                href="/jobs"
+                className={`${navLinkClass("/jobs")} flex items-center gap-1.5`}
+              >
                 {dict.jobs.navMyJobs}
+                {!!news?.customer && (
+                  <span className="rounded-full bg-accent px-1.5 text-xs text-accent-foreground">
+                    {news.customer}
+                  </span>
+                )}
               </Link>
               <Link
                 href="/company"
                 className={`${navLinkClass("/company")} flex items-center gap-1.5`}
               >
                 {dict.nav.myCompany}
-                {!!pendingCount && (
+                {!!news?.company && (
                   <span className="rounded-full bg-accent px-1.5 text-xs text-accent-foreground">
-                    {pendingCount}
+                    {news.company}
                   </span>
                 )}
               </Link>

@@ -39,6 +39,11 @@ export const jobUrgencyEnum = pgEnum("job_urgency", [
   "flexible",
 ]);
 export const jobSizeEnum = pgEnum("job_size", ["small", "large"]);
+export const visitStatusEnum = pgEnum("visit_status", [
+  "proposed",
+  "accepted",
+  "declined",
+]);
 export const jobBudgetEnum = pgEnum("job_budget", [
   "under_200",
   "200_1000",
@@ -249,6 +254,9 @@ export const jobs = pgTable("jobs", {
   status: jobStatusEnum("status").notNull().default("open"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   completedAt: timestamp("completed_at"),
+  // Last time the customer opened the job page: answers that arrived
+  // after this moment are "new" (badge in the navbar).
+  customerViewedAt: timestamp("customer_viewed_at"),
 });
 
 export const jobPhotos = pgTable("job_photos", {
@@ -285,6 +293,29 @@ export const quoteRequests = pgTable("quote_requests", {
   quoteAmountCents: integer("quote_amount_cents"),
   responseMessage: text("response_message"),
   respondedAt: timestamp("responded_at"),
+});
+
+/* 
+---------- Messages inside a quote request ----------
+A small chat between the customer and ONE company about a job.
+A message can also be a site-visit proposal ("sopralluogo") from the
+company: then visitAt is set and the customer accepts or declines it.
+*/
+
+export const requestMessages = pgTable("request_messages", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id")
+    .notNull()
+    .references(() => quoteRequests.id, { onDelete: "cascade" }),
+  senderId: text("sender_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  body: text("body"),
+  visitAt: timestamp("visit_at"),
+  visitStatus: visitStatusEnum("visit_status"),
+  // When the OTHER person opened the conversation (null = not read yet).
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 /* 
@@ -361,14 +392,32 @@ export const jobPhotosRelations = relations(jobPhotos, ({ one }) => ({
   job: one(jobs, { fields: [jobPhotos.jobId], references: [jobs.id] }),
 }));
 
-export const quoteRequestsRelations = relations(quoteRequests, ({ one }) => ({
-  job: one(jobs, { fields: [quoteRequests.jobId], references: [jobs.id] }),
-  company: one(companies, {
-    fields: [quoteRequests.companyId],
-    references: [companies.id],
+export const requestMessagesRelations = relations(
+  requestMessages,
+  ({ one }) => ({
+    request: one(quoteRequests, {
+      fields: [requestMessages.requestId],
+      references: [quoteRequests.id],
+    }),
+    sender: one(user, {
+      fields: [requestMessages.senderId],
+      references: [user.id],
+    }),
   }),
-  user: one(user, {
-    fields: [quoteRequests.userId],
-    references: [user.id],
+);
+
+export const quoteRequestsRelations = relations(
+  quoteRequests,
+  ({ one, many }) => ({
+    messages: many(requestMessages),
+    job: one(jobs, { fields: [quoteRequests.jobId], references: [jobs.id] }),
+    company: one(companies, {
+      fields: [quoteRequests.companyId],
+      references: [companies.id],
+    }),
+    user: one(user, {
+      fields: [quoteRequests.userId],
+      references: [user.id],
+    }),
   }),
-}));
+);

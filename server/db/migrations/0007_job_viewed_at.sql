@@ -1,0 +1,1 @@
+ALTER TABLE "jobs" ADD COLUMN "customer_viewed_at" timestamp;

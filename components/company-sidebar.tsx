@@ -20,7 +20,10 @@ export function CompanySidebar() {
   const pathname = usePathname();
   const { dict } = useI18n();
   const d = dict.dashboard;
-  const { data: pending } = trpc.quoteRequests.pendingCount.useQuery();
+  // Pending requests + unread messages for my company.
+  const { data: news } = trpc.notifications.summary.useQuery(undefined, {
+    refetchInterval: 30_000,
+  });
 
   const items = [
     { href: "/company", label: d.navOverview, icon: ICONS.overview },
@@ -28,7 +31,7 @@ export function CompanySidebar() {
       href: "/company/requests",
       label: d.navRequests,
       icon: ICONS.requests,
-      badge: pending,
+      badge: news?.company,
     },
     { href: "/company/profile", label: d.navProfile, icon: ICONS.profile },
     { href: "/company/reviews", label: d.navReviews, icon: ICONS.reviews },

@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
@@ -13,6 +13,7 @@ import { dateLocales } from "@/lib/i18n/config";
 import { format } from "@/lib/i18n/dictionaries";
 import { formatMoney } from "@/lib/money";
 import { uploadUrl } from "@/lib/uploads";
+import { RequestThread } from "@/components/request-thread";
 
 // /jobs/[id] — one of my jobs: details, photos and the quotes from
 // each company side by side, to compare them and choose one.
@@ -36,11 +37,22 @@ export default function JobPage({
     { enabled: !!session && Number.isInteger(jobId) && jobId > 0 },
   );
 
+  // Opening the job marks its answers as seen on the server: refresh
+  // the navbar badges right away instead of waiting for their timer.
+  const loadedAt = job ? job.id : null;
+  useEffect(() => {
+    if (loadedAt !== null) {
+      utils.notifications.invalidate();
+      utils.jobs.listMine.invalidate();
+    }
+  }, [loadedAt, utils]);
+
   // After any action, reload this job and the "My jobs" list.
   const refresh = () =>
     Promise.all([
       utils.jobs.getMine.invalidate({ id: jobId }),
       utils.jobs.listMine.invalidate(),
+      utils.notifications.invalidate(),
     ]);
   const chooseQuote = trpc.jobs.chooseQuote.useMutation({
     onSuccess: refresh,
@@ -219,6 +231,11 @@ export default function JobPage({
                 {request.status === "accepted" && (
                   <span className="chip">{j.chosenBadge}</span>
                 )}
+                {request.isNew && (
+                  <span className="chip bg-accent text-accent-foreground">
+                    {j.newBadge}
+                  </span>
+                )}
                 {request.status === "not_selected" && (
                   <span className="text-xs text-muted">{j.notChosen}</span>
                 )}
@@ -244,6 +261,13 @@ export default function JobPage({
                   </p>
                 )}
               </div>
+
+              <RequestThread
+                requestId={request.id}
+                viewer="customer"
+                closed={request.status === "cancelled"}
+                unread={request.unreadCount}
+              />
 
               {job.status === "open" && request.status === "quoted" && (
                 <button
