@@ -40,6 +40,18 @@ npm run dev
 
 Rilanciare lo script cancella e ricrea **solo** gli account `@demo.test` (con le loro imprese, richieste e recensioni): i tuoi account restano intatti.
 
+## Aggiornare il database dopo un `git pull`
+
+Quando lo schema cambia (nuove colonne o tabelle), nel repository arriva una nuova migrazione in `server/db/migrations`. Applicala al tuo database con:
+
+```bash
+npx drizzle-kit migrate
+```
+
+## Immagini caricate
+
+Loghi e foto delle imprese vengono salvati nella cartella `uploads/` del progetto (esclusa da git) e serviti da `/api/uploads/...`. Tutta la gestione dei file è in `server/storage.ts`.
+
 ## Comandi utili
 
 | Comando | Cosa fa |

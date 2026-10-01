@@ -128,6 +128,8 @@ export const companies = pgTable(
     postalCode: varchar("postal_code", { length: 5 }).notNull(),
     phone: varchar("phone", { length: 20 }),
     description: text("description"),
+    // File name of the logo inside the uploads/ folder (see server/storage.ts).
+    logoFile: varchar("logo_file", { length: 100 }),
     latitude: varchar("latitude", { length: 20 }),
     longitude: varchar("longitude", { length: 20 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -157,6 +159,19 @@ export const companiesCategories = pgTable(
     pk: primaryKey({ columns: [table.companyId, table.categoryId] }),
   }),
 );
+
+/* 
+---------- Photos of a company's work ----------
+*/
+
+export const companyPhotos = pgTable("company_photos", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  fileName: varchar("file_name", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 
 /* 
 ---------- Reviews ----------
@@ -218,6 +233,7 @@ export const companiesRelations = relations(companies, ({ one, many }) => ({
     references: [user.id],
   }),
   categories: many(companiesCategories),
+  photos: many(companyPhotos),
   reviews: many(reviews),
   quoteRequests: many(quoteRequests),
 }));
@@ -239,6 +255,13 @@ export const companiesCategoriesRelations = relations(
     }),
   }),
 );
+
+export const companyPhotosRelations = relations(companyPhotos, ({ one }) => ({
+  company: one(companies, {
+    fields: [companyPhotos.companyId],
+    references: [companies.id],
+  }),
+}));
 
 export const reviewsRelations = relations(reviews, ({ one }) => ({
   company: one(companies, {

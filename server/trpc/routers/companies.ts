@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import {
   companies,
   companiesCategories,
+  companyPhotos,
   quoteRequests,
   reviews,
   user,
@@ -11,6 +12,7 @@ import {
 import { and, asc, avg, count, eq, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { geocodeAddress } from "@/server/geocode";
+import { deleteImage } from "@/server/storage";
 
 // Fields a company can fill in, shared by `create` and `update`.
 // (The VAT number is only set once, at creation: it identifies the company.)
@@ -209,9 +211,55 @@ export const companiesRouter = router({
         categories: {
           with: { category: true },
         },
+        photos: { orderBy: asc(companyPhotos.createdAt) },
       },
     });
   }),
+
+  // Removes my company's logo (database first, then the file).
+
+  removeLogo: protectedProcedure.mutation(async ({ ctx }) => {
+    const myCompany = await db.query.companies.findFirst({
+      where: eq(companies.userId, ctx.session.user.id),
+      columns: { id: true, logoFile: true },
+    });
+    if (!myCompany) {
+      throw new TRPCError({ code: "NOT_FOUND" });
+    }
+    await db
+      .update(companies)
+      .set({ logoFile: null })
+      .where(eq(companies.id, myCompany.id));
+    await deleteImage(myCompany.logoFile);
+  }),
+
+  // Deletes one photo of my company. The WHERE also checks the photo
+  // belongs to MY company, so nobody can delete someone else's photos.
+
+  deletePhoto: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const myCompany = await db.query.companies.findFirst({
+        where: eq(companies.userId, ctx.session.user.id),
+        columns: { id: true },
+      });
+      if (!myCompany) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      const [deleted] = await db
+        .delete(companyPhotos)
+        .where(
+          and(
+            eq(companyPhotos.id, input.id),
+            eq(companyPhotos.companyId, myCompany.id),
+          ),
+        )
+        .returning();
+      if (!deleted) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      await deleteImage(deleted.fileName);
+    }),
 
   // Public search: lists companies, optionally filtered by city and/or
   // category. Both filters are optional — with no filters it returns
@@ -258,6 +306,7 @@ export const companiesRouter = router({
           city: true,
           province: true,
           description: true,
+          logoFile: true,
         },
         with: {
           categories: {
@@ -296,10 +345,15 @@ export const companiesRouter = router({
           description: true,
           latitude: true,
           longitude: true,
+          logoFile: true,
         },
         with: {
           categories: {
             with: { category: true },
+          },
+          photos: {
+            columns: { id: true, fileName: true },
+            orderBy: asc(companyPhotos.createdAt),
           },
         },
       });

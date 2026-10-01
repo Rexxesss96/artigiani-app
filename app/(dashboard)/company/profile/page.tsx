@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { CompanyForm } from "@/components/company-form";
 import { RequireCompany } from "@/components/require-company";
 import { useI18n } from "@/components/i18n-provider";
+import { CompanyMedia } from "@/components/company-media";
 
 // /company/profile: edit the public profile of my company.
 
@@ -26,6 +27,9 @@ export default function CompanyProfileEditPage() {
       {(myCompany) => (
         <main>
           <h1 className="text-2xl font-bold tracking-tight">{d.editProfile}</h1>
+          <div className="mt-6">
+            <CompanyMedia company={myCompany} />
+          </div>
           <div className="card mt-6">
             <CompanyForm
               // key: re-create the form (and its defaultValues) after a save
