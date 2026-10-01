@@ -66,6 +66,32 @@ export const quoteRequestsRouter = router({
       return request;
     }),
 
+  // The customer withdraws a request that the company hasn't answered yet.
+
+  cancel: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const [cancelled] = await db
+        .update(quoteRequests)
+        .set({ status: "cancelled" })
+        .where(
+          and(
+            eq(quoteRequests.id, input.id),
+            eq(quoteRequests.userId, ctx.session.user.id),
+            eq(quoteRequests.status, "pending"),
+          ),
+        )
+        .returning();
+
+      if (!cancelled) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: ctx.dict.errors.requestNotFound,
+        });
+      }
+      return cancelled;
+    }),
+
   // Requests the logged-in user has SENT, newest first.
 
   listSent: protectedProcedure.query(async ({ ctx }) => {

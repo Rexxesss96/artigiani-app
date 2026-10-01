@@ -7,10 +7,15 @@ import { useI18n } from "@/components/i18n-provider";
 // is ever added to the enum, TypeScript will complain here until we
 // give it a color too.
 
-const STATUS_STYLES: Record<"pending" | "accepted" | "rejected", string> = {
+const STATUS_STYLES: Record<
+  "pending" | "accepted" | "rejected" | "cancelled",
+  string
+> = {
   pending: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
   accepted: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
   rejected: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+  cancelled:
+    "bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
 };
 
 export function StatusBadge({

@@ -14,10 +14,14 @@ export default function MyRequestsPage() {
   const { data: session, isPending: sessionPending } = useSession();
   const { dict, locale } = useI18n();
 
+  const utils = trpc.useUtils();
   const { data: requests, isPending: requestsPending } =
     trpc.quoteRequests.listSent.useQuery(undefined, {
       enabled: !!session,
     });
+  const cancelRequest = trpc.quoteRequests.cancel.useMutation({
+    onSuccess: () => utils.quoteRequests.listSent.invalidate(),
+  });
 
   if (sessionPending) {
     return <p className="container-page text-muted">{dict.common.loading}</p>;
@@ -80,6 +84,20 @@ export default function MyRequestsPage() {
               {request.message}
             </p>
             <QuoteResponse request={request} viewer="customer" />
+            {request.status === "pending" && (
+              <button
+                onClick={() => {
+                  // confirm() opens the browser's own "OK / Cancel" box.
+                  if (window.confirm(dict.requestsPage.confirmCancel)) {
+                    cancelRequest.mutate({ id: request.id });
+                  }
+                }}
+                disabled={cancelRequest.isPending}
+                className="btn btn-secondary mt-3 py-1.5"
+              >
+                {dict.requestsPage.cancel}
+              </button>
+            )}
           </li>
         ))}
       </ul>
