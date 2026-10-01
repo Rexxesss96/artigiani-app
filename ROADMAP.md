@@ -1,4 +1,4 @@
-# Roadmap — Artigiani App
+# Roadmap — TrovArtigiano
 
 Piattaforma per trovare artigiani/imprese locali per mestiere. Next.js (App Router) + Drizzle ORM + Postgres + Better Auth + tRPC.
 

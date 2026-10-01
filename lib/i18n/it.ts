@@ -19,7 +19,7 @@ export const it: Dictionary = {
   },
   common: {
     loading: "Caricamento...",
-    footer: "Artigiani Directory · Trova l'artigiano giusto vicino a te",
+    footer: "{app} · Trova l'artigiano giusto vicino a te",
   },
   home: {
     title: "Trova imprese e artigiani della tua zona",

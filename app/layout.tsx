@@ -5,6 +5,8 @@ import { NavBar } from "@/components/nav-bar";
 import { TrpcProvider } from "@/components/trpc-provider";
 import { I18nProvider } from "@/components/i18n-provider";
 import { getDictionary } from "@/lib/i18n/server";
+import { format } from "@/lib/i18n/dictionaries";
+import { APP_NAME } from "@/lib/brand";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,10 +24,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { dict } = await getDictionary();
   return {
     // "template" is applied to the title of every child page that sets
-    // one: e.g. the company profile becomes "Rossi Impianti · Artigiani Directory".
+    // one: e.g. the company profile becomes "Rossi Impianti · TrovArtigiano".
     title: {
-      default: "Artigiani Directory",
-      template: "%s · Artigiani Directory",
+      default: APP_NAME,
+      template: `%s · ${APP_NAME}`,
     },
     description: dict.metadata.description,
   };
@@ -49,7 +51,7 @@ export default async function RootLayout({
             <NavBar />
             <div className="flex-1">{children}</div>
             <footer className="border-t border-border py-6 text-center text-sm text-muted">
-              {dict.common.footer}
+              {format(dict.common.footer, { app: APP_NAME })}
             </footer>
           </TrpcProvider>
         </I18nProvider>

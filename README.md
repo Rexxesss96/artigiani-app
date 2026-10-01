@@ -1,4 +1,4 @@
-# Artigiani Directory
+# TrovArtigiano
 
 Web app per trovare imprese e artigiani della propria zona, chiedere un preventivo e lasciare una recensione. Interfaccia in italiano e inglese.
 
