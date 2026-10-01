@@ -19,11 +19,40 @@ import { relations } from "drizzle-orm";
 
 export const roleEnum = pgEnum("role", ["customer", "company"]);
 
+// Life of a quote request sent to ONE company for a job:
+//   pending -> quoted (company sent a price) or rejected (company declined)
+//   quoted  -> accepted (customer chose it) or not_selected (chose another)
+//   any open one -> cancelled (customer cancelled the job)
 export const requestStatusEnum = pgEnum("request_status", [
   "pending",
   "accepted",
   "rejected",
-  "cancelled", // withdrawn by the customer while still pending
+  "cancelled",
+  "quoted",
+  "not_selected",
+]);
+
+// ---------- Jobs: what the customer needs done ----------
+export const jobUrgencyEnum = pgEnum("job_urgency", [
+  "urgent", // today / as soon as possible
+  "week", // within a week
+  "flexible",
+]);
+export const jobSizeEnum = pgEnum("job_size", ["small", "large"]);
+export const jobBudgetEnum = pgEnum("job_budget", [
+  "under_200",
+  "200_1000",
+  "1000_5000",
+  "over_5000",
+  "unknown",
+]);
+// open: collecting quotes · assigned: a company was chosen ·
+// completed: the work is done · cancelled: the customer gave up
+export const jobStatusEnum = pgEnum("job_status", [
+  "open",
+  "assigned",
+  "completed",
+  "cancelled",
 ]);
 
 /* 
@@ -193,6 +222,41 @@ export const reviews = pgTable("reviews", {
 });
 
 /* 
+---------- Jobs ----------
+A job is posted once by a customer and sent to up to 5 companies:
+each of them gets a row in quote_requests (below).
+*/
+
+export const jobs = pgTable("jobs", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id")
+    .notNull()
+    .references(() => categories.id),
+  title: varchar("title", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  city: varchar("city", { length: 60 }).notNull(),
+  address: varchar("address", { length: 100 }),
+  urgency: jobUrgencyEnum("urgency").notNull(),
+  size: jobSizeEnum("size").notNull(),
+  budget: jobBudgetEnum("budget").notNull().default("unknown"),
+  status: jobStatusEnum("status").notNull().default("open"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const jobPhotos = pgTable("job_photos", {
+  id: serial("id").primaryKey(),
+  jobId: integer("job_id")
+    .notNull()
+    .references(() => jobs.id, { onDelete: "cascade" }),
+  fileName: varchar("file_name", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/* 
 ---------- Quote requests ----------
 */
 
@@ -205,7 +269,10 @@ export const quoteRequests = pgTable("quote_requests", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  message: text("message").notNull(),
+  // The job this request belongs to (null only for old requests made
+  // before jobs existed, which carried their own message).
+  jobId: integer("job_id").references(() => jobs.id, { onDelete: "cascade" }),
+  message: text("message"),
   status: requestStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   // The company's answer. Money is stored in CENTS as an integer
@@ -224,6 +291,7 @@ export const quoteRequests = pgTable("quote_requests", {
 // convention), unlike our other tables which are plural.
 export const userRelations = relations(user, ({ many }) => ({
   companies: many(companies),
+  jobs: many(jobs),
   reviews: many(reviews),
   quoteRequests: many(quoteRequests),
 }));
@@ -275,7 +343,22 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   }),
 }));
 
+export const jobsRelations = relations(jobs, ({ one, many }) => ({
+  user: one(user, { fields: [jobs.userId], references: [user.id] }),
+  category: one(categories, {
+    fields: [jobs.categoryId],
+    references: [categories.id],
+  }),
+  photos: many(jobPhotos),
+  quoteRequests: many(quoteRequests),
+}));
+
+export const jobPhotosRelations = relations(jobPhotos, ({ one }) => ({
+  job: one(jobs, { fields: [jobPhotos.jobId], references: [jobs.id] }),
+}));
+
 export const quoteRequestsRelations = relations(quoteRequests, ({ one }) => ({
+  job: one(jobs, { fields: [quoteRequests.jobId], references: [jobs.id] }),
   company: one(companies, {
     fields: [quoteRequests.companyId],
     references: [companies.id],

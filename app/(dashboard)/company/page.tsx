@@ -77,8 +77,8 @@ export default function CompanyOverviewPage() {
       value: stats?.pending,
       highlight: !!stats?.pending,
     },
-    { label: d.statAccepted, value: stats?.accepted },
-    { label: d.statReviews, value: stats?.reviewCount },
+    { label: d.statQuoted, value: stats?.quoted },
+    { label: d.statWon, value: stats?.accepted },
   ];
 
   return (

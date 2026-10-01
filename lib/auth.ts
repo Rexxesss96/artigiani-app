@@ -25,6 +25,17 @@ export const auth = betterAuth({
     deleteUser: {
       enabled: true,
       beforeDelete: async (user) => {
+        const userJobs = await db.query.jobs.findMany({
+          where: eq(schema.jobs.userId, user.id),
+          columns: { id: true },
+          with: { photos: { columns: { fileName: true } } },
+        });
+        await Promise.all(
+          userJobs.flatMap((job) =>
+            job.photos.map((p) => deleteImage(p.fileName)),
+          ),
+        );
+
         const company = await db.query.companies.findFirst({
           where: eq(schema.companies.userId, user.id),
           columns: { logoFile: true },

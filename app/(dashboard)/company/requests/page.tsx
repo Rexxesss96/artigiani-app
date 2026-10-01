@@ -5,7 +5,7 @@ import { ReceivedRequests } from "@/components/received-requests";
 import { RequireCompany } from "@/components/require-company";
 import { useI18n } from "@/components/i18n-provider";
 
-type Filter = "all" | "pending" | "accepted" | "rejected";
+type Filter = "all" | "pending" | "quoted" | "accepted";
 
 // /company/requests: requests received, with tabs to filter by status.
 
@@ -15,8 +15,8 @@ export default function CompanyRequestsPage() {
 
   const tabs: { value: Filter; label: string }[] = [
     { value: "pending", label: dict.status.pending },
+    { value: "quoted", label: dict.status.quoted },
     { value: "accepted", label: dict.status.accepted },
-    { value: "rejected", label: dict.status.rejected },
     { value: "all", label: dict.dashboard.filterAll },
   ];
 

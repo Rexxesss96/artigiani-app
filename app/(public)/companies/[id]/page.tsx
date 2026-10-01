@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { cache } from "react";
 import Link from "next/link";
-import { QuoteRequestForm } from "@/components/quote-request-form";
 import { ReviewForm } from "@/components/review-form";
 import { Stars } from "@/components/stars";
 import { CompanyAvatar } from "@/components/company-avatar";
@@ -264,7 +263,17 @@ export default async function CompanyProfilePage({
             ) : isOwnCompany ? (
               <p className="text-sm text-muted">{dict.profile.yourCompany}</p>
             ) : (
-              <QuoteRequestForm companyId={company.id} />
+              <>
+                <Link
+                  href={`/jobs/new?company=${company.id}`}
+                  className="btn btn-primary w-full"
+                >
+                  {dict.profile.askQuote}
+                </Link>
+                <p className="mt-2 text-xs text-muted">
+                  {dict.profile.askQuoteHint}
+                </p>
+              </>
             )}
           </section>
         </aside>

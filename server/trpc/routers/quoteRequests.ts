@@ -5,107 +5,23 @@ import { companies, quoteRequests } from "@/server/db/schema";
 import { and, count, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
+// The company side of jobs: every company a job was sent to gets a
+// quote request, and answers it with a quote or declines it.
+// (The customer side lives in the jobs router.)
+
+// The company of the logged-in user, or an error if there's none.
+async function requireMyCompany(userId: string) {
+  const myCompany = await db.query.companies.findFirst({
+    where: eq(companies.userId, userId),
+    columns: { id: true },
+  });
+  if (!myCompany) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return myCompany;
+}
+
 export const quoteRequestsRouter = router({
-  // A logged-in user sends a quote request to a company.
-  // It always starts as "pending": only the company can change it.
-
-  create: protectedProcedure
-    .input(
-      z.object({
-        companyId: z.number().int().positive(),
-        message: z.string().trim().min(10).max(2000),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const company = await db.query.companies.findFirst({
-        where: eq(companies.id, input.companyId),
-        columns: { userId: true },
-      });
-
-      if (!company) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: ctx.dict.errors.companyNotFound,
-        });
-      }
-
-      if (company.userId === ctx.session.user.id) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: ctx.dict.errors.ownCompanyQuote,
-        });
-      }
-
-      // One open request per company is enough: this stops a customer
-      // from flooding a company with duplicates while it hasn't answered.
-      const pendingRequest = await db.query.quoteRequests.findFirst({
-        where: and(
-          eq(quoteRequests.userId, ctx.session.user.id),
-          eq(quoteRequests.companyId, input.companyId),
-          eq(quoteRequests.status, "pending"),
-        ),
-        columns: { id: true },
-      });
-
-      if (pendingRequest) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: ctx.dict.errors.pendingRequestExists,
-        });
-      }
-
-      const [request] = await db
-        .insert(quoteRequests)
-        .values({
-          companyId: input.companyId,
-          userId: ctx.session.user.id,
-          message: input.message,
-        })
-        .returning();
-
-      return request;
-    }),
-
-  // The customer withdraws a request that the company hasn't answered yet.
-
-  cancel: protectedProcedure
-    .input(z.object({ id: z.number().int().positive() }))
-    .mutation(async ({ ctx, input }) => {
-      const [cancelled] = await db
-        .update(quoteRequests)
-        .set({ status: "cancelled" })
-        .where(
-          and(
-            eq(quoteRequests.id, input.id),
-            eq(quoteRequests.userId, ctx.session.user.id),
-            eq(quoteRequests.status, "pending"),
-          ),
-        )
-        .returning();
-
-      if (!cancelled) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: ctx.dict.errors.requestNotFound,
-        });
-      }
-      return cancelled;
-    }),
-
-  // Requests the logged-in user has SENT, newest first.
-
-  listSent: protectedProcedure.query(async ({ ctx }) => {
-    return db.query.quoteRequests.findMany({
-      where: eq(quoteRequests.userId, ctx.session.user.id),
-      orderBy: desc(quoteRequests.createdAt),
-      with: {
-        company: {
-          columns: { id: true, businessName: true, city: true },
-        },
-      },
-    });
-  }),
-
   // How many requests are waiting for an answer from my company
   // (the badge in the navbar). 0 if the user has no company.
 
@@ -123,7 +39,7 @@ export const quoteRequestsRouter = router({
     return row.value;
   }),
 
-  // Requests RECEIVED by the logged-in user's company, newest first.
+  // Requests RECEIVED by my company, newest first, with the whole job.
   // Returns an empty list if the user has no company.
 
   listReceived: protectedProcedure.query(async ({ ctx }) => {
@@ -131,7 +47,6 @@ export const quoteRequestsRouter = router({
       where: eq(companies.userId, ctx.session.user.id),
       columns: { id: true },
     });
-
     if (!myCompany) {
       return [];
     }
@@ -145,18 +60,24 @@ export const quoteRequestsRouter = router({
         user: {
           columns: { firstName: true, lastName: true, email: true },
         },
+        job: {
+          with: {
+            category: true,
+            photos: { columns: { id: true, fileName: true } },
+          },
+        },
       },
     });
   }),
 
-  // The company answers a request it received: it accepts it with a
-  // quote (amount + optional message) or rejects it (optional message).
+  // My company answers a request: with a quote (amount + optional
+  // message) or by declining it (optional message).
 
-  updateStatus: protectedProcedure
+  respond: protectedProcedure
     .input(
       z.object({
         id: z.number().int().positive(),
-        status: z.enum(["accepted", "rejected"]),
+        action: z.enum(["quote", "decline"]),
         // Up to 1 million euros, in cents.
         quoteAmountCents: z
           .number()
@@ -168,50 +89,44 @@ export const quoteRequestsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Accepting means sending a price: the amount is required.
-      if (input.status === "accepted" && input.quoteAmountCents === undefined) {
+      // Sending a quote means sending a price: the amount is required.
+      if (input.action === "quote" && input.quoteAmountCents === undefined) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: ctx.dict.errors.amountRequired,
         });
       }
 
-      const myCompany = await db.query.companies.findFirst({
-        where: eq(companies.userId, ctx.session.user.id),
-        columns: { id: true },
+      const myCompany = await requireMyCompany(ctx.session.user.id);
+
+      // The request must be mine, still pending, and its job still open
+      // (the customer may have chosen someone else or cancelled).
+      const request = await db.query.quoteRequests.findFirst({
+        where: and(
+          eq(quoteRequests.id, input.id),
+          eq(quoteRequests.companyId, myCompany.id),
+          eq(quoteRequests.status, "pending"),
+        ),
+        with: { job: { columns: { status: true } } },
       });
-
-      if (!myCompany) {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
-
-      // The WHERE checks three things at once: the right request,
-      // that it belongs to MY company, and that it's still pending.
-      // If any of them is false, nothing is updated.
-      const [updated] = await db
-        .update(quoteRequests)
-        .set({
-          status: input.status,
-          quoteAmountCents:
-            input.status === "accepted" ? input.quoteAmountCents : null,
-          responseMessage: input.responseMessage || null,
-          respondedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(quoteRequests.id, input.id),
-            eq(quoteRequests.companyId, myCompany.id),
-            eq(quoteRequests.status, "pending"),
-          ),
-        )
-        .returning();
-
-      if (!updated) {
+      if (!request || (request.job && request.job.status !== "open")) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: ctx.dict.errors.requestNotFound,
         });
       }
+
+      const [updated] = await db
+        .update(quoteRequests)
+        .set({
+          status: input.action === "quote" ? "quoted" : "rejected",
+          quoteAmountCents:
+            input.action === "quote" ? input.quoteAmountCents : null,
+          responseMessage: input.responseMessage || null,
+          respondedAt: new Date(),
+        })
+        .where(eq(quoteRequests.id, request.id))
+        .returning();
 
       return updated;
     }),

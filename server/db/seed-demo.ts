@@ -5,6 +5,8 @@ import {
   companies,
   companiesCategories,
   companyPhotos,
+  jobPhotos,
+  jobs,
   quoteRequests,
   reviews,
   user,
@@ -176,6 +178,48 @@ const COMPANIES: DemoCompany[] = [
     },
     categorySlugs: ["gardener"],
   },
+  {
+    owner: {
+      email: `idraulica.express${DEMO_DOMAIN}`,
+      firstName: "Davide",
+      lastName: "Galli",
+    },
+    company: {
+      businessName: "Idraulica Express",
+      vatNumber: "90000000007",
+      address: "Via Milano 8",
+      city: "Gallarate",
+      province: "VA",
+      postalCode: "21013",
+      phone: "0331 112233",
+      description:
+        "Pronto intervento idraulico 7 giorni su 7: perdite, scarichi otturati, caldaie.",
+      latitude: "45.6596",
+      longitude: "8.7915",
+    },
+    categorySlugs: ["plumber"],
+  },
+  {
+    owner: {
+      email: `edil.lombardia${DEMO_DOMAIN}`,
+      firstName: "Giorgio",
+      lastName: "Rinaldi",
+    },
+    company: {
+      businessName: "Edil Lombardia",
+      vatNumber: "90000000008",
+      address: "Via Torino 40",
+      city: "Milano",
+      province: "MI",
+      postalCode: "20123",
+      phone: "02 9876543",
+      description:
+        "Ristrutturazioni chiavi in mano: bagni, cucine e appartamenti completi, con direzione lavori.",
+      latitude: "45.4605",
+      longitude: "9.1840",
+    },
+    categorySlugs: ["mason", "tiler"],
+  },
 ];
 
 // Creates a user through Better Auth, so the password is hashed exactly
@@ -221,6 +265,15 @@ async function main() {
       ].map(deleteImage),
     );
   }
+  // Photos attached to demo customers' jobs, too.
+  const demoJobPhotos = await db
+    .select({ fileName: jobPhotos.fileName })
+    .from(jobPhotos)
+    .innerJoin(jobs, eq(jobs.id, jobPhotos.jobId))
+    .innerJoin(user, eq(user.id, jobs.userId))
+    .where(like(user.email, `%${DEMO_DOMAIN}`));
+  await Promise.all(demoJobPhotos.map((p) => deleteImage(p.fileName)));
+
   await db.delete(user).where(like(user.email, `%${DEMO_DOMAIN}`));
 
   const allCategories = await db.query.categories.findMany();
@@ -252,61 +305,225 @@ async function main() {
     );
   }
 
-  const [ferrari, colombo, russo, greco] = companyIds;
+  const [ferrari, colombo, russo, greco, , , express, edil] = companyIds;
+  const categoryId = (slug: string) => categoryIdBySlug.get(slug)!;
+  const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000);
 
-  console.log("Creating quote requests and reviews...");
-  await db.insert(quoteRequests).values([
+  console.log("Creating jobs, quotes and reviews...");
+
+  // Creates a job and one quote request per company. `answers` says how
+  // each company replied (missing = still pending).
+  async function createJob(
+    job: Omit<typeof jobs.$inferInsert, "id">,
+    answers: {
+      companyId: number;
+      status: (typeof quoteRequests.$inferInsert)["status"];
+      quoteAmountCents?: number;
+      responseMessage?: string;
+    }[],
+  ) {
+    const [created] = await db.insert(jobs).values(job).returning();
+    await db.insert(quoteRequests).values(
+      answers.map((answer) => ({
+        jobId: created.id,
+        userId: job.userId,
+        companyId: answer.companyId,
+        status: answer.status,
+        quoteAmountCents: answer.quoteAmountCents ?? null,
+        responseMessage: answer.responseMessage ?? null,
+        respondedAt: answer.status === "pending" ? null : job.createdAt,
+        createdAt: job.createdAt,
+      })),
+    );
+  }
+
+  // ---------- Giulia ----------
+  // Small urgent job: two plumbers answered, she has to choose.
+  await createJob(
     {
       userId: giuliaId,
-      companyId: ferrari,
-      message:
-        "Perdita dal rubinetto della cucina, servirebbe un intervento entro la settimana.",
-      status: "accepted",
-      quoteAmountCents: 9000,
-      responseMessage:
-        "Possiamo passare giovedì mattina. Il prezzo include uscita, manodopera e guarnizioni.",
-      respondedAt: new Date(),
+      categoryId: categoryId("plumber"),
+      title: "Perdita dal rubinetto della cucina",
+      description:
+        "Il rubinetto della cucina gocciola forte anche da chiuso e c'è acqua sotto il lavello. Servirebbe un intervento il prima possibile.",
+      city: "Varese",
+      address: "Via Dandolo 3",
+      urgency: "urgent",
+      size: "small",
+      budget: "under_200",
+      createdAt: daysAgo(1),
     },
+    [
+      {
+        companyId: ferrari,
+        status: "quoted",
+        quoteAmountCents: 9000,
+        responseMessage:
+          "Possiamo passare domani mattina. Il prezzo include uscita, manodopera e guarnizioni.",
+      },
+      {
+        companyId: express,
+        status: "quoted",
+        quoteAmountCents: 7500,
+        responseMessage: "Passo oggi pomeriggio entro le 18. Ricambi esclusi.",
+      },
+    ],
+  );
+
+  // Big job: a renovation, one company declined, one sent a quote.
+  await createJob(
     {
       userId: giuliaId,
-      companyId: colombo,
-      message:
-        "Vorrei un preventivo per una libreria su misura di circa 3 metri.",
-      status: "pending",
+      categoryId: categoryId("mason"),
+      title: "Ristrutturazione completa del bagno",
+      description:
+        "Bagno di circa 6 mq: rifacimento di pavimento e rivestimenti, sostituzione sanitari e piatto doccia al posto della vasca.",
+      city: "Milano",
+      urgency: "flexible",
+      size: "large",
+      budget: "over_5000",
+      createdAt: daysAgo(5),
     },
+    [
+      {
+        companyId: russo,
+        status: "rejected",
+        responseMessage: "Purtroppo siamo pieni fino a fine anno. Ci scusiamo!",
+      },
+      {
+        companyId: edil,
+        status: "quoted",
+        quoteAmountCents: 850000,
+        responseMessage:
+          "Preventivo indicativo: per quello definitivo proponiamo un sopralluogo gratuito. Durata lavori circa 2 settimane.",
+      },
+    ],
+  );
+
+  // Still waiting for an answer.
+  await createJob(
     {
       userId: giuliaId,
-      companyId: russo,
-      message: "Rifacimento completo del bagno, circa 6 mq.",
-      status: "rejected",
-      responseMessage: "Purtroppo siamo pieni fino a fine anno. Ci scusiamo!",
-      respondedAt: new Date(),
+      categoryId: categoryId("carpenter"),
+      title: "Libreria su misura per il soggiorno",
+      description:
+        "Libreria a parete di circa 3 metri per 2,5 in legno chiaro, con un vano per la TV.",
+      city: "Como",
+      urgency: "flexible",
+      size: "large",
+      budget: "1000_5000",
+      createdAt: daysAgo(2),
     },
+    [{ companyId: colombo, status: "pending" }],
+  );
+
+  // Done and reviewed.
+  await createJob(
+    {
+      userId: giuliaId,
+      categoryId: categoryId("plumber"),
+      title: "Sostituzione del sifone del lavandino",
+      description: "Il sifone del bagno perde, va sostituito.",
+      city: "Varese",
+      urgency: "week",
+      size: "small",
+      budget: "under_200",
+      status: "completed",
+      createdAt: daysAgo(40),
+      completedAt: daysAgo(35),
+    },
+    [{ companyId: ferrari, status: "accepted", quoteAmountCents: 6000 }],
+  );
+
+  // ---------- Luca ----------
+  await createJob(
     {
       userId: lucaId,
-      companyId: ferrari,
-      message: "Sostituzione del quadro elettrico in un appartamento di 80 mq.",
-      status: "accepted",
-      quoteAmountCents: 85000,
-      responseMessage:
-        "Quadro nuovo a norma con differenziali, certificazione inclusa. Tempo: 1 giorno.",
-      respondedAt: new Date(),
+      categoryId: categoryId("electrician"),
+      title: "Nuovo quadro elettrico",
+      description:
+        "Sostituzione del quadro elettrico in un appartamento di 80 mq, con certificazione.",
+      city: "Varese",
+      urgency: "week",
+      size: "large",
+      budget: "200_1000",
+      status: "completed",
+      createdAt: daysAgo(30),
+      completedAt: daysAgo(25),
     },
+    [
+      {
+        companyId: ferrari,
+        status: "accepted",
+        quoteAmountCents: 85000,
+        responseMessage:
+          "Quadro nuovo a norma con differenziali, certificazione inclusa. Tempo: 1 giorno.",
+      },
+    ],
+  );
+
+  await createJob(
     {
       userId: lucaId,
-      companyId: greco,
-      message: "Tinteggiatura di soggiorno e due camere.",
-      status: "accepted",
-      quoteAmountCents: 120050,
-      respondedAt: new Date(),
+      categoryId: categoryId("house-painter"),
+      title: "Tinteggiatura soggiorno e due camere",
+      description:
+        "Pareti e soffitti, circa 90 mq di superficie. Colori chiari.",
+      city: "Roma",
+      urgency: "flexible",
+      size: "large",
+      budget: "1000_5000",
+      status: "completed",
+      createdAt: daysAgo(20),
+      completedAt: daysAgo(12),
     },
+    [{ companyId: greco, status: "accepted", quoteAmountCents: 120050 }],
+  );
+
+  // Assigned, not finished yet.
+  await createJob(
     {
       userId: lucaId,
-      companyId: ferrari,
-      message: "Installazione di uno scaldabagno elettrico.",
-      status: "pending",
+      categoryId: categoryId("plumber"),
+      title: "Installazione scaldabagno elettrico",
+      description: "Scaldabagno da 80 litri in sostituzione di quello vecchio.",
+      city: "Varese",
+      urgency: "week",
+      size: "small",
+      budget: "200_1000",
+      status: "assigned",
+      createdAt: daysAgo(4),
     },
-  ]);
+    [
+      {
+        companyId: ferrari,
+        status: "accepted",
+        quoteAmountCents: 35050,
+        responseMessage:
+          "Scaldabagno incluso, installazione in mezza giornata.",
+      },
+      { companyId: express, status: "not_selected", quoteAmountCents: 39000 },
+    ],
+  );
+
+  // A new urgent request still waiting for Ferrari Impianti's answer.
+  await createJob(
+    {
+      userId: lucaId,
+      categoryId: categoryId("plumber"),
+      title: "Scarico della doccia otturato",
+      description: "L'acqua non scende più dallo scarico della doccia.",
+      city: "Varese",
+      urgency: "urgent",
+      size: "small",
+      budget: "under_200",
+      createdAt: daysAgo(0),
+    },
+    [
+      { companyId: ferrari, status: "pending" },
+      { companyId: express, status: "pending" },
+    ],
+  );
 
   await db.insert(reviews).values([
     {

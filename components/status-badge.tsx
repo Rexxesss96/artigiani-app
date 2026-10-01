@@ -8,12 +8,15 @@ import { useI18n } from "@/components/i18n-provider";
 // give it a color too.
 
 const STATUS_STYLES: Record<
-  "pending" | "accepted" | "rejected" | "cancelled",
+  "pending" | "quoted" | "accepted" | "rejected" | "not_selected" | "cancelled",
   string
 > = {
   pending: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  quoted: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
   accepted: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
   rejected: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+  not_selected:
+    "bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
   cancelled:
     "bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
 };

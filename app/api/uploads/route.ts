@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/server/db";
-import { companies, companyPhotos } from "@/server/db/schema";
+import { companies, companyPhotos, jobPhotos, jobs } from "@/server/db/schema";
 import {
   deleteImage,
   detectImageType,
   MAX_IMAGE_BYTES,
+  MAX_JOB_PHOTOS,
   MAX_PHOTOS,
   saveImage,
 } from "@/server/storage";
 
-// POST /api/uploads — uploads the logo or a photo of MY company.
+// POST /api/uploads — uploads the logo or a photo of MY company
+// (kind = "logo" | "photo"), or a photo of one of MY jobs
+// (kind = "job-photo", with jobId).
 // It's a Route Handler and not a tRPC procedure because files travel
 // as multipart "FormData", which is what an HTML file input produces.
 // Errors are returned as codes; the page translates them.
@@ -26,18 +29,13 @@ export async function POST(request: Request) {
     return fail("unauthorized", 401);
   }
 
-  const company = await db.query.companies.findFirst({
-    where: eq(companies.userId, session.user.id),
-    columns: { id: true, logoFile: true },
-  });
-  if (!company) {
-    return fail("noCompany", 403);
-  }
-
   const formData = await request.formData();
   const kind = formData.get("kind");
   const file = formData.get("file");
-  if ((kind !== "logo" && kind !== "photo") || !(file instanceof File)) {
+  if (
+    (kind !== "logo" && kind !== "photo" && kind !== "job-photo") ||
+    !(file instanceof File)
+  ) {
     return fail("generic");
   }
   if (file.size > MAX_IMAGE_BYTES) {
@@ -48,6 +46,39 @@ export async function POST(request: Request) {
   const type = detectImageType(bytes);
   if (!type) {
     return fail("badType");
+  }
+
+  // ---------- Photo of one of my jobs ----------
+  if (kind === "job-photo") {
+    const jobId = Number(formData.get("jobId"));
+    const job = Number.isInteger(jobId)
+      ? await db.query.jobs.findFirst({
+          where: and(eq(jobs.id, jobId), eq(jobs.userId, session.user.id)),
+          columns: { id: true },
+        })
+      : undefined;
+    if (!job) {
+      return fail("generic", 404);
+    }
+    const [{ value: photoCount }] = await db
+      .select({ value: count() })
+      .from(jobPhotos)
+      .where(eq(jobPhotos.jobId, job.id));
+    if (photoCount >= MAX_JOB_PHOTOS) {
+      return fail("tooMany");
+    }
+    const fileName = await saveImage(bytes, type);
+    await db.insert(jobPhotos).values({ jobId: job.id, fileName });
+    return NextResponse.json({ fileName });
+  }
+
+  // ---------- Logo or photo of my company ----------
+  const company = await db.query.companies.findFirst({
+    where: eq(companies.userId, session.user.id),
+    columns: { id: true, logoFile: true },
+  });
+  if (!company) {
+    return fail("noCompany", 403);
   }
 
   if (kind === "photo") {

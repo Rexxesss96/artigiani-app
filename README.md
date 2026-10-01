@@ -29,14 +29,14 @@ npm run dev
 
 ## Account demo
 
-`npm run db:seed:demo` crea 6 imprese in varie città, alcune richieste di preventivo e alcune recensioni. Tutti gli account demo hanno la password **`Demo1234!`**.
+`npm run db:seed:demo` crea 8 imprese in varie città, alcuni lavori con i preventivi delle imprese e alcune recensioni. Tutti gli account demo hanno la password **`Demo1234!`**.
 
 | Email | Ruolo | Cosa puoi provare |
 | --- | --- | --- |
-| `cliente@demo.test` | Cliente (Giulia Bianchi) | Cercare imprese, inviare richieste, vedere "Le mie richieste", recensire Ferrari Impianti (già fatto) |
-| `impresa@demo.test` | Impresa (Ferrari Impianti, Varese) | Dashboard "La mia impresa": richieste ricevute, Accetta/Rifiuta, Modifica profilo |
-| `luca.moretti@demo.test` | Cliente (Luca Moretti) | Richieste accettate da Ferrari Impianti e Greco Colori, già recensite; una richiesta in attesa |
-| `lucia.colombo@demo.test`, `andrea.russo@demo.test`, `sara.greco@demo.test`, `paolo.marino@demo.test`, `elena.conti@demo.test` | Imprese | Altre imprese demo |
+| `cliente@demo.test` | Cliente (Giulia Bianchi) | "I miei lavori": un lavoro urgente con 2 preventivi da confrontare, una ristrutturazione con un preventivo e una rinuncia, un lavoro in attesa e uno completato. "Pubblica un lavoro" |
+| `impresa@demo.test` | Impresa (Ferrari Impianti, Varese) | Dashboard "La mia impresa": una richiesta urgente in attesa, preventivi inviati, lavori ottenuti, recensioni, logo e foto |
+| `luca.moretti@demo.test` | Cliente (Luca Moretti) | Lavori completati e recensiti, uno assegnato, uno urgente in attesa |
+| `lucia.colombo@demo.test`, `andrea.russo@demo.test`, `sara.greco@demo.test`, `paolo.marino@demo.test`, `elena.conti@demo.test`, `idraulica.express@demo.test`, `edil.lombardia@demo.test` | Imprese | Altre imprese demo |
 
 Rilanciare lo script cancella e ricrea **solo** gli account `@demo.test` (con le loro imprese, richieste e recensioni): i tuoi account restano intatti.
 
