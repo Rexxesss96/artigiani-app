@@ -80,6 +80,18 @@ export const it: Dictionary = {
     rejected: "rifiutata",
   },
   dashboard: {
+    navOverview: "Panoramica",
+    navRequests: "Richieste",
+    navProfile: "Profilo",
+    navReviews: "Recensioni",
+    statPending: "Richieste in attesa",
+    statAccepted: "Preventivi accettati",
+    statRating: "Voto medio",
+    statReviews: "Recensioni",
+    seeRequests: "Rispondi alle richieste",
+    filterAll: "Tutte",
+    needCompany: "Prima registra la tua impresa.",
+    goRegister: "Registra la tua impresa",
     subtitle: "Gestisci il tuo profilo pubblico e le richieste che ricevi.",
     registerSubtitle:
       "Inserisci i dati della tua impresa: dopo la registrazione i clienti ti troveranno nella ricerca.",

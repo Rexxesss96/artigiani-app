@@ -1,8 +1,14 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { db } from "@/server/db";
-import { companies, companiesCategories, user } from "@/server/db/schema";
-import { and, asc, eq, ilike, inArray } from "drizzle-orm";
+import {
+  companies,
+  companiesCategories,
+  quoteRequests,
+  reviews,
+  user,
+} from "@/server/db/schema";
+import { and, asc, avg, count, eq, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { geocodeAddress } from "@/server/geocode";
 
@@ -154,6 +160,45 @@ export const companiesRouter = router({
         return updated;
       });
     }),
+
+  // Numbers for the dashboard overview of the logged-in user's company.
+
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    const myCompany = await db.query.companies.findFirst({
+      where: eq(companies.userId, ctx.session.user.id),
+      columns: { id: true },
+    });
+    if (!myCompany) {
+      return null;
+    }
+
+    // Two small GROUP BY / aggregate queries, run in parallel.
+    const [requestsByStatus, [reviewStats]] = await Promise.all([
+      db
+        .select({ status: quoteRequests.status, value: count() })
+        .from(quoteRequests)
+        .where(eq(quoteRequests.companyId, myCompany.id))
+        .groupBy(quoteRequests.status),
+      db
+        .select({ value: count(), average: avg(reviews.rating) })
+        .from(reviews)
+        .where(eq(reviews.companyId, myCompany.id)),
+    ]);
+
+    const byStatus = Object.fromEntries(
+      requestsByStatus.map((row) => [row.status, row.value]),
+    );
+
+    return {
+      pending: byStatus.pending ?? 0,
+      accepted: byStatus.accepted ?? 0,
+      rejected: byStatus.rejected ?? 0,
+      reviewCount: reviewStats.value,
+      // avg() comes back from Postgres as text (e.g. "4.5000"), or null.
+      averageRating:
+        reviewStats.average === null ? null : Number(reviewStats.average),
+    };
+  }),
 
   // Returns the logged-in user's company (if they have one), with categories.
 

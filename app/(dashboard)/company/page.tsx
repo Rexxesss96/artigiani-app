@@ -1,45 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
-import { ReceivedRequests } from "@/components/received-requests";
 import { CompanyForm } from "@/components/company-form";
 import { CompanyAvatar } from "@/components/company-avatar";
+import { Stars } from "@/components/stars";
 import { useI18n } from "@/components/i18n-provider";
+import { format } from "@/lib/i18n/dictionaries";
 
-// "My company": registration form if the user has no company yet,
-// otherwise the company dashboard (profile + received requests).
+// /company: registration form if the user has no company yet,
+// otherwise the dashboard overview (numbers at a glance).
 
-export default function CompanyDashboardPage() {
+export default function CompanyOverviewPage() {
   const router = useRouter();
   const utils = trpc.useUtils();
   const { data: session, isPending: sessionPending } = useSession();
   const { dict } = useI18n();
   const d = dict.dashboard;
 
-  const [editing, setEditing] = useState(false);
-  const [saved, setSaved] = useState(false);
-
   const { data: myCompany, isPending: companyPending } =
-    trpc.companies.getMine.useQuery(undefined, {
-      enabled: !!session,
-    });
+    trpc.companies.getMine.useQuery(undefined, { enabled: !!session });
+  const { data: stats } = trpc.companies.stats.useQuery(undefined, {
+    enabled: !!myCompany,
+  });
 
   const createCompany = trpc.companies.create.useMutation({
     onSuccess: async () => {
       await utils.companies.getMine.invalidate();
+      // The layout is a Server Component: refresh it so the side menu
+      // appears now that the company exists.
       router.refresh();
-    },
-  });
-
-  const updateCompany = trpc.companies.update.useMutation({
-    onSuccess: async () => {
-      await utils.companies.getMine.invalidate();
-      setEditing(false);
-      setSaved(true);
     },
   });
 
@@ -78,22 +70,19 @@ export default function CompanyDashboardPage() {
     );
   }
 
-  // ---------- Company dashboard ----------
-  // The form works with plain values: turn the DB row (nulls, joined
-  // categories) into what CompanyForm expects.
-  const initialValues = {
-    businessName: myCompany.businessName,
-    address: myCompany.address,
-    city: myCompany.city,
-    province: myCompany.province,
-    postalCode: myCompany.postalCode,
-    phone: myCompany.phone ?? undefined,
-    description: myCompany.description ?? undefined,
-    categoryIds: myCompany.categories.map((c) => c.categoryId),
-  };
+  // ---------- Overview ----------
+  const statCards = [
+    {
+      label: d.statPending,
+      value: stats?.pending,
+      highlight: !!stats?.pending,
+    },
+    { label: d.statAccepted, value: stats?.accepted },
+    { label: d.statReviews, value: stats?.reviewCount },
+  ];
 
   return (
-    <main className="container-page max-w-3xl">
+    <main className="flex flex-col gap-6">
       <section className="card flex flex-wrap items-center gap-4">
         <CompanyAvatar name={myCompany.businessName} size="lg" />
         <div className="min-w-0 flex-1">
@@ -102,47 +91,46 @@ export default function CompanyDashboardPage() {
           </h1>
           <p className="text-sm text-muted">{d.subtitle}</p>
         </div>
-        <div className="flex gap-2">
-          <Link
-            href={`/companies/${myCompany.id}`}
-            className="btn btn-secondary"
+        <Link href={`/companies/${myCompany.id}`} className="btn btn-secondary">
+          {d.viewProfile}
+        </Link>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((card) => (
+          <div
+            key={card.label}
+            className={`card ${card.highlight ? "border-accent" : ""}`}
           >
-            {d.viewProfile}
-          </Link>
-          {!editing && (
-            <button
-              onClick={() => {
-                setEditing(true);
-                setSaved(false);
-              }}
-              className="btn btn-primary"
-            >
-              {d.editProfile}
-            </button>
+            <p className="text-sm text-muted">{card.label}</p>
+            <p className="mt-1 text-3xl font-bold">{card.value ?? "–"}</p>
+          </div>
+        ))}
+        <div className="card">
+          <p className="text-sm text-muted">{d.statRating}</p>
+          {stats?.averageRating ? (
+            <p className="mt-1 flex items-center gap-2">
+              <span className="text-3xl font-bold">
+                {stats.averageRating.toFixed(1)}
+              </span>
+              <Stars
+                rating={stats.averageRating}
+                label={format(dict.reviewForm.outOfFive, {
+                  rating: stats.averageRating.toFixed(1),
+                })}
+              />
+            </p>
+          ) : (
+            <p className="mt-1 text-3xl font-bold">–</p>
           )}
         </div>
       </section>
 
-      {saved && <p className="success-text mt-3">{d.saved}</p>}
-
-      {editing && (
-        <section className="card mt-6">
-          <h2 className="mb-4 text-lg font-semibold">{d.editProfile}</h2>
-          <CompanyForm
-            mode="edit"
-            initial={initialValues}
-            // The server ignores fields it doesn't expect (like the
-            // empty vatNumber): zod drops unknown keys.
-            onSubmit={(values) => updateCompany.mutate(values)}
-            isPending={updateCompany.isPending}
-            error={updateCompany.error?.message}
-            onCancel={() => setEditing(false)}
-          />
-        </section>
+      {!!stats?.pending && (
+        <Link href="/company/requests" className="btn btn-primary self-start">
+          {d.seeRequests}
+        </Link>
       )}
-
-      <h2 className="mt-8 mb-4 text-lg font-semibold">{d.quoteRequests}</h2>
-      <ReceivedRequests />
     </main>
   );
 }

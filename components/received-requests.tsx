@@ -10,15 +10,29 @@ import { RespondForm } from "@/components/respond-form";
 // Company dashboard section: quote requests received by my company,
 // with Accept / Reject buttons on the pending ones.
 
-export function ReceivedRequests() {
+export function ReceivedRequests({
+  status,
+}: {
+  // Show only requests with this status (all of them if undefined).
+  status?: "pending" | "accepted" | "rejected";
+}) {
   const { dict, locale } = useI18n();
   const utils = trpc.useUtils();
-  const { data: requests, isPending } =
+  const { data: allRequests, isPending } =
     trpc.quoteRequests.listReceived.useQuery();
+  const requests = status
+    ? allRequests?.filter((request) => request.status === status)
+    : allRequests;
 
   const updateStatus = trpc.quoteRequests.updateStatus.useMutation({
-    // Reload the list so the badge and buttons reflect the new status.
-    onSuccess: () => utils.quoteRequests.listReceived.invalidate(),
+    // Reload everything that depends on the requests: the list, the
+    // badge in the menus and the numbers in the overview.
+    onSuccess: () =>
+      Promise.all([
+        utils.quoteRequests.listReceived.invalidate(),
+        utils.quoteRequests.pendingCount.invalidate(),
+        utils.companies.stats.invalidate(),
+      ]),
   });
 
   if (isPending) {

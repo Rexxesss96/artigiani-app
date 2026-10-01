@@ -78,6 +78,18 @@ export const en = {
     rejected: "rejected",
   },
   dashboard: {
+    navOverview: "Overview",
+    navRequests: "Requests",
+    navProfile: "Profile",
+    navReviews: "Reviews",
+    statPending: "Pending requests",
+    statAccepted: "Quotes accepted",
+    statRating: "Average rating",
+    statReviews: "Reviews",
+    seeRequests: "Answer requests",
+    filterAll: "All",
+    needCompany: "Register your company first.",
+    goRegister: "Register your company",
     subtitle: "Manage your public profile and the requests you receive.",
     registerSubtitle:
       "Fill in your company details: once registered, customers will find you in the search.",
