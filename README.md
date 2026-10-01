@@ -33,7 +33,7 @@ npm run dev
 
 | Email | Ruolo | Cosa puoi provare |
 | --- | --- | --- |
-| `cliente@demo.test` | Cliente (Giulia Bianchi) | "I miei lavori": un lavoro urgente con 2 preventivi da confrontare, una ristrutturazione con un preventivo e una rinuncia, un lavoro in attesa e uno completato. "Pubblica un lavoro" |
+| `cliente@demo.test` | Cliente (Giulia Bianchi) | "I miei lavori": un lavoro urgente con 2 preventivi da confrontare, una ristrutturazione con un preventivo, una rinuncia e una chat con proposta di sopralluogo, un lavoro in attesa e uno completato. "Pubblica un lavoro" |
 | `impresa@demo.test` | Impresa (Ferrari Impianti, Varese) | Dashboard "La mia impresa": una richiesta urgente in attesa, preventivi inviati, lavori ottenuti, recensioni, logo e foto |
 | `luca.moretti@demo.test` | Cliente (Luca Moretti) | Lavori completati e recensiti, uno assegnato, uno urgente in attesa |
 | `lucia.colombo@demo.test`, `andrea.russo@demo.test`, `sara.greco@demo.test`, `paolo.marino@demo.test`, `elena.conti@demo.test`, `idraulica.express@demo.test`, `edil.lombardia@demo.test` | Imprese | Altre imprese demo |

@@ -74,7 +74,14 @@ export default function MyJobsPage() {
                     )}
                   </p>
                 </div>
-                <JobStatusBadge status={job.status} />
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <JobStatusBadge status={job.status} />
+                  {job.hasNews && (
+                    <span className="chip bg-accent text-accent-foreground">
+                      ● {j.news}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="mt-3">
                 <JobBadges job={job} />

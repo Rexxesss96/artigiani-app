@@ -47,7 +47,9 @@ function nominatimSearch(params: Record<string, string>) {
   };
 
   const result = queue.then(run);
-  queue = result.then(() => new Promise((resolve) => setTimeout(resolve, 1000)));
+  queue = result.then(
+    () => new Promise((resolve) => setTimeout(resolve, 1000)),
+  );
   return result;
 }
 
@@ -94,7 +96,10 @@ export async function geocodeCity(city: string): Promise<Coordinates | null> {
   // town, and then a plain name match ("Varese") works better.
   // (Accents are ignored: "forli" matches "Forlì".)
   const plain = (text: string) =>
-    text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+    text
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase();
   const point =
     place && plain(place.name) === plain(key)
       ? { latitude: place.latitude, longitude: place.longitude }

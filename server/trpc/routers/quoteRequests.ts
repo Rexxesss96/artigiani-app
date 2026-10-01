@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
 import { db } from "@/server/db";
-import { companies, quoteRequests } from "@/server/db/schema";
-import { and, count, desc, eq } from "drizzle-orm";
+import { companies, quoteRequests, requestMessages } from "@/server/db/schema";
+import { and, desc, eq, isNull, ne } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 // The company side of jobs: every company a job was sent to gets a
@@ -22,23 +22,6 @@ async function requireMyCompany(userId: string) {
 }
 
 export const quoteRequestsRouter = router({
-  // How many requests are waiting for an answer from my company
-  // (the badge in the navbar). 0 if the user has no company.
-
-  pendingCount: protectedProcedure.query(async ({ ctx }) => {
-    const [row] = await db
-      .select({ value: count() })
-      .from(quoteRequests)
-      .innerJoin(companies, eq(companies.id, quoteRequests.companyId))
-      .where(
-        and(
-          eq(companies.userId, ctx.session.user.id),
-          eq(quoteRequests.status, "pending"),
-        ),
-      );
-    return row.value;
-  }),
-
   // Requests RECEIVED by my company, newest first, with the whole job.
   // Returns an empty list if the user has no company.
 
@@ -51,10 +34,18 @@ export const quoteRequestsRouter = router({
       return [];
     }
 
-    return db.query.quoteRequests.findMany({
+    const requests = await db.query.quoteRequests.findMany({
       where: eq(quoteRequests.companyId, myCompany.id),
       orderBy: desc(quoteRequests.createdAt),
       with: {
+        // Messages to me not read yet (only their ids, to count them)
+        messages: {
+          columns: { id: true },
+          where: and(
+            ne(requestMessages.senderId, ctx.session.user.id),
+            isNull(requestMessages.readAt),
+          ),
+        },
         // Only what the company needs to get back to the customer:
         // never the whole user row.
         user: {
@@ -68,6 +59,11 @@ export const quoteRequestsRouter = router({
         },
       },
     });
+
+    return requests.map(({ messages, ...request }) => ({
+      ...request,
+      unreadCount: messages.length,
+    }));
   }),
 
   // My company answers a request: with a quote (amount + optional

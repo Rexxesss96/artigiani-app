@@ -1,9 +1,14 @@
 import { z } from "zod";
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
 import { db } from "@/server/db";
-import { companies, jobs, quoteRequests } from "@/server/db/schema";
+import {
+  companies,
+  jobs,
+  quoteRequests,
+  requestMessages,
+} from "@/server/db/schema";
 
 // Jobs: the customer describes what they need ONCE and sends it to up
 // to 5 companies. Each company answers with a quote (quoteRequests
@@ -11,6 +16,18 @@ import { companies, jobs, quoteRequests } from "@/server/db/schema";
 // marks the job as completed.
 
 export const MAX_COMPANIES_PER_JOB = 5;
+
+// Was this answer given after the customer last opened the job?
+function isNewAnswer(
+  request: { status: string; respondedAt: Date | null },
+  viewedAt: Date | null,
+) {
+  return (
+    (request.status === "quoted" || request.status === "rejected") &&
+    request.respondedAt !== null &&
+    (viewedAt === null || request.respondedAt > viewedAt)
+  );
+}
 
 // Average of a list of ratings, or null if there are none.
 function average(ratings: { rating: number }[]) {
@@ -98,14 +115,28 @@ export const jobsRouter = router({
       with: {
         category: true,
         quoteRequests: {
-          columns: { status: true },
-          with: { company: { columns: { businessName: true } } },
+          columns: { status: true, respondedAt: true },
+          with: {
+            company: { columns: { businessName: true } },
+            // Messages to me not read yet (only their ids, to count them)
+            messages: {
+              columns: { id: true },
+              where: and(
+                ne(requestMessages.senderId, ctx.session.user.id),
+                isNull(requestMessages.readAt),
+              ),
+            },
+          },
         },
       },
     });
 
     return myJobs.map(({ quoteRequests: requests, ...job }) => ({
       ...job,
+      // Something happened since I last looked: a new answer or message.
+      hasNews: requests.some(
+        (r) => isNewAnswer(r, job.customerViewedAt) || r.messages.length > 0,
+      ),
       companyCount: requests.length,
       quoteCount: requests.filter((r) =>
         ["quoted", "accepted", "not_selected"].includes(r.status),
@@ -128,6 +159,13 @@ export const jobsRouter = router({
           photos: { columns: { id: true, fileName: true } },
           quoteRequests: {
             with: {
+              messages: {
+                columns: { id: true },
+                where: and(
+                  ne(requestMessages.senderId, ctx.session.user.id),
+                  isNull(requestMessages.readAt),
+                ),
+              },
               company: {
                 columns: {
                   id: true,
@@ -147,20 +185,31 @@ export const jobsRouter = router({
         return null;
       }
 
+      // Opening the job = seeing its answers: remember when, so the
+      // navbar badge only counts what arrives after now.
+      await db
+        .update(jobs)
+        .set({ customerViewedAt: new Date() })
+        .where(eq(jobs.id, job.id));
+
       return {
         ...job,
-        quoteRequests: job.quoteRequests.map(({ company, ...request }) => ({
-          ...request,
-          company: {
-            id: company.id,
-            businessName: company.businessName,
-            city: company.city,
-            province: company.province,
-            logoFile: company.logoFile,
-            reviewCount: company.reviews.length,
-            averageRating: average(company.reviews),
-          },
-        })),
+        quoteRequests: job.quoteRequests.map(
+          ({ company, messages, ...request }) => ({
+            ...request,
+            isNew: isNewAnswer(request, job.customerViewedAt),
+            unreadCount: messages.length,
+            company: {
+              id: company.id,
+              businessName: company.businessName,
+              city: company.city,
+              province: company.province,
+              logoFile: company.logoFile,
+              reviewCount: company.reviews.length,
+              averageRating: average(company.reviews),
+            },
+          }),
+        ),
       };
     }),
 
