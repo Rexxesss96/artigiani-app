@@ -47,8 +47,19 @@ Better Auth con campi custom (`role`, `firstName`, `lastName`). Pagine login/reg
 - ✅ Mappa OpenStreetMap nel profilo impresa; coordinate calcolate dall'indirizzo con Nominatim alla registrazione e quando cambia l'indirizzo
 - ⬜ Deploy su Vercel + database Postgres online (rimandato: per ora l'app resta in locale)
 
+### ✅ Milestone 8 — Nuove funzioni (ottobre 2026)
+- ✅ Nome dell'app: **TrovArtigiano** (`lib/brand.ts`), uguale in tutte le lingue
+- ✅ Home: illustrazione "cantiere" in SVG e tessere dei mestieri con icone
+- ✅ Preventivo vero: l'impresa accetta con importo (salvato in centesimi) e messaggio, o rifiuta con un messaggio
+- ✅ Dashboard impresa con menu laterale (Panoramica, Richieste, Profilo, Recensioni) e contatore delle richieste in attesa nella navbar
+- ✅ Logo e fino a 8 foto dei lavori (`uploads/` + `server/storage.ts`, Route Handler `/api/uploads`)
+- ✅ Pagina account: dati personali, cambio password, eliminazione account; il cliente può annullare una richiesta in attesa
+- ✅ Home: vista "Mappa" con tutte le imprese (Leaflet + OpenStreetMap) e ordinamento per voto
+
 ### Idee per il futuro
-- Mappa con tutte le imprese nella pagina di ricerca (servirebbe una libreria come Leaflet)
-- Foto/logo dell'impresa
+- Deploy online (rimandato: l'app resta in locale). Servirà anche spostare le immagini su uno storage cloud: basta cambiare `server/storage.ts`
 - Notifiche email quando arriva o cambia una richiesta di preventivo
+- Messaggi tra cliente e impresa dentro la richiesta (una piccola chat)
 - Vincolo unico nel database "una recensione per cliente per impresa" (oggi è controllato solo nel codice)
+- Paginazione dei risultati di ricerca (oggi massimo 50)
+- Test automatici (unit test sui router tRPC, test end-to-end con Playwright)

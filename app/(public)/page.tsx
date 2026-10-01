@@ -8,6 +8,7 @@ import { CompanyAvatar } from "@/components/company-avatar";
 import { Stars } from "@/components/stars";
 import { HeroIllustration } from "@/components/hero-illustration";
 import { TradeIcon } from "@/components/trade-icon";
+import { CompaniesMapLoader } from "@/components/companies-map-loader";
 
 // Public home page: search form + results list.
 // Server Component — the filters live in the URL (/?city=Roma&category=2),
@@ -33,12 +34,15 @@ export default async function HomePage({
     Number.isInteger(categoryParam) && categoryParam > 0
       ? categoryParam
       : undefined;
+  // Anything other than the expected values falls back to the default.
+  const sort = params.sort === "rating" ? "rating" : "name";
+  const view = params.view === "map" ? "map" : "list";
 
   const { dict } = await getDictionary();
   const caller = appRouter.createCaller(await createContext());
   const [categories, companies] = await Promise.all([
     caller.categories.list(),
-    caller.companies.search({ city: city || undefined, categoryId }),
+    caller.companies.search({ city: city || undefined, categoryId, sort }),
   ]);
 
   const hasFilters = city !== "" || categoryId !== undefined;
@@ -49,14 +53,44 @@ export default async function HomePage({
     categoryName(dict, a).localeCompare(categoryName(dict, b)),
   );
 
-  // Link of a trade tile: keeps the city typed in the search, if any.
-  function tradeHref(id: number) {
-    const query = new URLSearchParams({ category: String(id) });
-    if (city) {
-      query.set("city", city);
-    }
-    return `/?${query}`;
+  // Builds a link to this page with the current search, changing only
+  // what's in `changes` (e.g. a trade tile changes just the category).
+  function hrefWith(
+    changes: Partial<Record<"city" | "category" | "sort" | "view", string>>,
+  ) {
+    const values = {
+      city,
+      category: categoryId ? String(categoryId) : "",
+      sort: sort === "name" ? "" : sort,
+      view: view === "list" ? "" : view,
+      ...changes,
+    };
+    // Empty values are left out, to keep the URL short.
+    const query = new URLSearchParams(
+      Object.entries(values).filter(([, value]) => value !== ""),
+    );
+    return query.size > 0 ? `/?${query}` : "/";
   }
+
+  // Leaflet needs numbers; companies without a position can't be shown.
+  const mapCompanies = companies.flatMap((c) => {
+    const latitude = Number(c.latitude);
+    const longitude = Number(c.longitude);
+    return c.latitude &&
+      c.longitude &&
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude)
+      ? [
+          {
+            id: c.id,
+            businessName: c.businessName,
+            city: c.city,
+            latitude,
+            longitude,
+          },
+        ]
+      : [];
+  });
 
   return (
     <main className="container-page">
@@ -75,7 +109,7 @@ export default async function HomePage({
         {/* action="" = stay on this page, only the search params change */}
         <Form
           action=""
-          className="card mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+          className="card mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end"
         >
           <label>
             <span className="label">{dict.home.city}</span>
@@ -103,6 +137,17 @@ export default async function HomePage({
             </select>
           </label>
 
+          <label>
+            <span className="label">{dict.home.sortBy}</span>
+            <select name="sort" defaultValue={sort} className="input">
+              <option value="name">{dict.home.sortName}</option>
+              <option value="rating">{dict.home.sortRating}</option>
+            </select>
+          </label>
+
+          {/* Keeps the list/map choice when searching again */}
+          {view === "map" && <input type="hidden" name="view" value="map" />}
+
           <button type="submit" className="btn btn-primary">
             {dict.home.search}
           </button>
@@ -115,7 +160,7 @@ export default async function HomePage({
             return (
               <li key={category.id}>
                 <Link
-                  href={tradeHref(category.id)}
+                  href={hrefWith({ category: String(category.id) })}
                   aria-current={active ? "true" : undefined}
                   className={`flex h-full items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
                     active
@@ -145,18 +190,55 @@ export default async function HomePage({
               ? dict.home.resultsOne
               : format(dict.home.resultsOther, { count: companies.length })}
         </p>
-        {hasFilters && (
-          <Link href="/" className="link text-sm">
-            {dict.home.clearFilters}
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          {hasFilters && (
+            <Link href="/" className="link text-sm">
+              {dict.home.clearFilters}
+            </Link>
+          )}
+          {/* List / Map switch: two links that change only `view` */}
+          <div className="flex rounded-lg border border-border p-0.5 text-sm">
+            {(["list", "map"] as const).map((v) => (
+              <Link
+                key={v}
+                href={hrefWith({ view: v === "list" ? "" : v })}
+                aria-current={view === v ? "true" : undefined}
+                className={`rounded-md px-3 py-1 ${
+                  view === v ? "bg-foreground text-background" : "text-muted"
+                }`}
+              >
+                {v === "list" ? dict.home.viewList : dict.home.viewMap}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
       {companies.length === 0 && hasFilters && (
         <p className="mt-2 text-sm text-muted">{dict.home.noResultsHint}</p>
       )}
 
-      <ul className="mt-4 grid gap-4 md:grid-cols-2">
+      {view === "map" && (
+        <div className="mt-4">
+          <CompaniesMapLoader
+            companies={mapCompanies}
+            profileLabel={dict.home.seeProfile}
+          />
+          {mapCompanies.length < companies.length && (
+            <p className="mt-2 text-sm text-muted">
+              {companies.length - mapCompanies.length === 1
+                ? dict.home.notOnMapOne
+                : format(dict.home.notOnMap, {
+                    count: companies.length - mapCompanies.length,
+                  })}
+            </p>
+          )}
+        </div>
+      )}
+
+      <ul
+        className={`mt-4 grid gap-4 md:grid-cols-2 ${view === "map" ? "hidden" : ""}`}
+      >
         {companies.map((company) => (
           <li key={company.id}>
             <Link
