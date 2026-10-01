@@ -270,6 +270,7 @@ export const companiesRouter = router({
       z.object({
         city: z.string().trim().max(60).optional(),
         categoryId: z.number().int().positive().optional(),
+        sort: z.enum(["name", "rating"]).default("name"),
       }),
     )
     .query(async ({ input }) => {
@@ -307,6 +308,8 @@ export const companiesRouter = router({
           province: true,
           description: true,
           logoFile: true,
+          latitude: true,
+          longitude: true,
         },
         with: {
           categories: {
@@ -317,7 +320,7 @@ export const companiesRouter = router({
         },
       });
 
-      return results.map(({ reviews, ...company }) => ({
+      const withRatings = results.map(({ reviews, ...company }) => ({
         ...company,
         reviewCount: reviews.length,
         averageRating:
@@ -325,6 +328,18 @@ export const companiesRouter = router({
             ? null
             : reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length,
       }));
+
+      // The database already sorts by name. For "rating" we re-sort here,
+      // because the average is computed in JavaScript: best first, then
+      // more reviews first, companies without reviews at the end.
+      if (input.sort === "rating") {
+        withRatings.sort(
+          (a, b) =>
+            (b.averageRating ?? -1) - (a.averageRating ?? -1) ||
+            b.reviewCount - a.reviewCount,
+        );
+      }
+      return withRatings;
     }),
 
   // Returns a company by id with its linked categories (public query).
